@@ -1,0 +1,124 @@
+relocalization_2d:
+  # 是否发布找到的初始位姿到 /initialpose 话题（用于将重定位结果传输到 AMCL）
+  # Whether to publish the estimated initial pose to /initialpose topic
+  publish_init_pose_topic: true
+
+  # 是否通过请求 /set_init_pose_request（relocalization_toolbox_msgs::initial_pose_request） 服务方式发布初始定位。
+  # Whether to publish initial localization via /set_init_pose_request service (relocalization_toolbox_msgs::initial_pose_request)
+  call_init_pose_request: false
+
+  # 地图坐标系名称
+  # Global map frame name
+  map_frame: "map"
+
+  # 机器人底盘坐标系名称
+  # Robot base frame name
+  base_frame: "base_link"
+
+  # 激光雷达坐标系名称
+  # LiDAR sensor frame name
+  lidar_frame: "lidar_link"
+
+  # 是否在节点启动时从话题预加载地图
+  # If to pre-fetch map data from topic when node started
+  prefetch_map_from_topic: true
+
+  # 是否激光雷达安装是反向的（如倒装）
+  # Whether the LiDAR is installed in a reversed orientation
+  lidar_reverted: false
+
+  # 激光束下采样步长（1 表示逐光束采样，4 表示每 4 束取 1 束）
+  # Laser beam downsampling step (1 = every beam, 4 = every 4th beam)
+  lidar_sampling_step: 4 # >0
+
+  # 是否发布调试可视化数据
+  # Whether to enable debug visualization
+  enable_visualization: true
+
+  # 是否启用可达性采样进行初始位姿采样
+  # Whether to use reachability-constrained sampling for initial pose candidates
+  use_reachability_sampling: true
+
+  # RRT 单次扩展的最小距离（米）
+  # Minimum expansion distance for RRT (in meters)
+  rrt_min_expand_dist: 0.2
+
+  # RRT 单次扩展的最大距离（米）
+  # Maximum expansion distance for RRT (in meters)
+  rrt_max_expand_dist: 2.0 # >=rrt_min_expand_dist
+
+  # 相邻区域锚点之间的最小距离（米）
+  # Minimum distance between anchor points (in meters)
+  anchor_point_min_dist: 0.6
+
+  # 采样点与障碍物的最小距离（米）
+  # Minimum distance from sampled pose to obstacles (in meters)
+  min_dist_to_obstacle: 0.21
+
+  # RRT 最长持续时间（秒）
+  # Maximum RRT sampling duration (in seconds)
+  reachability_sampling_duration: 10
+
+  # 匹配评分的早停阈值，当某个候选位姿置信度达到该阈值时，算法结束并输出结果
+  # Early-stopping threshold: if any candidate pose reaches this confidence, the algorithm stops and outputs the result
+  fit_score_threshold_max: 0.95 # [0.0, 1.0]
+
+  # 匹配评分的最小阈值，如果没有任何一个候选位姿置信度达到该阈值，则重定位失败
+  # Minimum confidence threshold; if no candidate pose exceeds this value, relocalization is considered failed
+  fit_score_threshold_min: 0.85 # [0.0, 1.0], <=fit_score_threshold_max
+
+  # 初始角度搜索的步长（单位：弧度）
+  # Step size for angular search (in radians)
+  angle_search_step: 0.26 # (0.0, PI]
+
+  # 初筛排序后，每次批处理的候选区域数量
+  # Number of candidate regions processed per batch after initial filtering and sorting
+  area_batch_proc_number: 200
+
+  # 每次批处理最多保留的候选姿态数量
+  # Maximum number of candidate poses retained per batch
+  area_candidate_number: 20
+
+  # 高斯似然模型的标准差（米）
+  # Standard deviation for Gaussian likelihood model (in meters)
+  sigma_hit: 0.2
+
+  # 命中模型权重
+  # Hit probability weight in likelihood field
+  z_hit: 1.0
+
+  # 随机命中模型权重（通常设为 0）
+  # Random hit probability weight (usually set to 0)
+  z_rand: 0.0
+
+  # 光束与障碍物的最大允许平均距离（米）
+  # Maximum tolerated mean beam-to-obstacle distance (in meters)
+  max_tolerance_dist: 3.0
+
+  # 栅格值小于该值视为自由区（free）
+  # Occupancy grid value threshold for free space
+  map_free_threshold: 30
+
+  # 栅格值大于该值视为占据（obstacle）
+  # Occupancy grid value threshold for obstacles
+  map_occupied_threshold: 55
+
+  # 激光点处理的感知半径（米）
+  # Sensing radius for LiDAR scan in localization (in meters)
+  sensing_radius: 10.0
+
+  # ICP 匹配时允许的最大点对距离（米）
+  # Maximum correspondence distance in ICP alignment (in meters)
+  max_correspondence_distance: 1.5
+
+  # ICP 迭代中位姿变换的最小变化量（收敛判据）
+  # Minimum transformation change threshold for ICP convergence
+  transformation_epsilon: 1e-8
+
+  # ICP 迭代中欧式距离的最小平均误差（收敛判据）
+  # Minimum average Euclidean fitness error for ICP convergence
+  euclidean_fitness_epsilon: 1e-5
+
+  # ICP 最大迭代次数
+  # Maximum number of ICP iterations
+  max_iterations: 200

@@ -1,0 +1,9 @@
+uint8 mode
+uint8 MODE_MAP_FROM_TOPIC = 0
+uint8 MODE_MAP_FROM_FILE = 1
+string path
+string name
+---
+string result
+geometry_msgs/TransformStamped tf_map_to_base
+float32 score
