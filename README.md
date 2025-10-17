@@ -9,8 +9,7 @@ Developed on **Ubuntu 20.04** with **ROS Noetic**.
 
 This project is released under the **GNU General Public License v3.0 (GPLv3)**.
 
-> Commercial use without explicit permission from the authors is **not allowed**.  
-> For **academic research and non-commercial use only**.  
+> For **academic research use only**.  
 > Please **cite the associated publication** when using this code.
 
 ---
