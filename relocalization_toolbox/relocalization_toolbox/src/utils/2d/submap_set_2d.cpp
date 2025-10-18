@@ -313,7 +313,7 @@ namespace submap_set_2d
             }
         }
 
-        ROS_INFO("MAER computation time: %.3lfs.", (ros::WallTime::now() - mean_dist_calc_start_time).toSec());
+        ROS_INFO("SMAD computation time: %.3lfs.", (ros::WallTime::now() - mean_dist_calc_start_time).toSec());
 
         // visualization
         if (enable_visualization)
