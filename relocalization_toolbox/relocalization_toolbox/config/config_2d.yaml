@@ -49,7 +49,7 @@ relocalization_2d:
 
   # 相邻区域锚点之间的最小距离（米）
   # Minimum distance between anchor points (in meters)
-  anchor_point_min_dist: 0.6
+  anchor_point_min_dist: 1.0
 
   # 采样点与障碍物的最小距离（米）
   # Minimum distance from sampled pose to obstacles (in meters)
@@ -73,11 +73,11 @@ relocalization_2d:
 
   # 初筛排序后，每次批处理的候选区域数量
   # Number of candidate regions processed per batch after initial filtering and sorting
-  area_batch_proc_number: 200
+  area_batch_proc_number: 50
 
   # 每次批处理最多保留的候选姿态数量
   # Maximum number of candidate poses retained per batch
-  area_candidate_number: 20
+  area_candidate_number: 50
 
   # 高斯似然模型的标准差（米）
   # Standard deviation for Gaussian likelihood model (in meters)
