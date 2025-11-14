@@ -1,6 +1,6 @@
 # relocalization_toolbox
 
-**A 2-D global relocalization framework for LiDAR-only mobile robots**  
+**A passive 2-D global relocalization framework for LiDAR-only mobile robots**  
 Developed on **Ubuntu 20.04** with **ROS Noetic**.
 
 ---
