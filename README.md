@@ -23,4 +23,4 @@ A 2-D global relocalization framework that enables LiDAR-only mobile robots to p
 ## Citation
 
 If you use this code in your research, please cite the associated publication.
-
+M. Zhang, L. Ma, Y. Wu, K. Shen, D. Huang, and H. Leung, “Tackling the Kidnapped Robot Problem via Sparse Feasible Hypothesis Sampling and Reliable Batched Multi-Stage Inference,” arXiv preprint arXiv:2511.01219, 2025.
