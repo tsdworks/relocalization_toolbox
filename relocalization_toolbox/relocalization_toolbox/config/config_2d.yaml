@@ -62,7 +62,7 @@ relocalization_2d:
 
   # 匹配评分的早停阈值，当某个候选位姿置信度达到该阈值时，算法结束并输出结果
   # Early-stopping threshold: if any candidate pose reaches this confidence, the algorithm stops and outputs the result
-  fit_score_threshold_max: 0.95 # [0.0, 1.0]
+  fit_score_threshold_max: 0.97 # [0.0, 1.0]
 
   # 匹配评分的最小阈值，如果没有任何一个候选位姿置信度达到该阈值，则重定位失败
   # Minimum confidence threshold; if no candidate pose exceeds this value, relocalization is considered failed
