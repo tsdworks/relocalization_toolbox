@@ -11,13 +11,13 @@
 
 namespace area_set_2d
 {
-    area_set_2d::area_set_2d(const bool &use_reachability_sampling,
-                                 const float &rrt_min_expand_dist, const float &rrt_max_expand_dist, const int &reachability_sampling_duration,
+    area_set_2d::area_set_2d(const bool &use_traversability_sampling,
+                                 const float &rrt_min_expand_dist, const float &rrt_max_expand_dist, const int &traversability_sampling_duration,
                                  const int &map_free_threshold, const int &map_occupied_threshold,
                                  const float &sensing_radius, const float &anchor_point_min_dist,
                                  const float &angle_search_step)
-        : use_reachability_sampling_(use_reachability_sampling),
-          rrt_min_expand_dist_(rrt_min_expand_dist), rrt_max_expand_dist_(rrt_max_expand_dist), reachability_sampling_duration_(reachability_sampling_duration),
+        : use_traversability_sampling_(use_traversability_sampling),
+          rrt_min_expand_dist_(rrt_min_expand_dist), rrt_max_expand_dist_(rrt_max_expand_dist), traversability_sampling_duration_(traversability_sampling_duration),
           map_free_threshold_(map_free_threshold), map_occupied_threshold_(map_occupied_threshold),
           sensing_radius_(sensing_radius), anchor_point_min_dist_(anchor_point_min_dist),
           angle_search_step_(angle_search_step)
@@ -231,16 +231,16 @@ namespace area_set_2d
 
         vector<geometry_msgs::Point32> valid_points;
 
-        if (use_reachability_sampling_)
+        if (use_traversability_sampling_)
         {
-            ROS_INFO("Using reachability-constrained sampling.");
+            ROS_INFO("Using traversability-constrained sampling.");
 
             sampling_2d::sampling_2d sampling(rrt_min_expand_dist_, rrt_max_expand_dist_, min_dist_to_obstacle,
                                               anchor_point_min_dist_, map_free_threshold_, map_occupied_threshold_);
 
             sampling.initialize(map, min_dist_to_obs_table);
 
-            valid_points = sampling.get_points(reachability_sampling_duration_);
+            valid_points = sampling.get_points(traversability_sampling_duration_);
         }
         else
         {

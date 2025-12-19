@@ -12,8 +12,8 @@
 namespace relocalization_2d
 {
     relocalization_2d::relocalization_2d(
-        const bool &enable_visualization, const bool &use_reachability_sampling,
-        const float &rrt_min_expand_dist, const float &rrt_max_expand_dist, const int &reachability_sampling_duration,
+        const bool &enable_visualization, const bool &use_traversability_sampling,
+        const float &rrt_min_expand_dist, const float &rrt_max_expand_dist, const int &traversability_sampling_duration,
         const float &fit_score_threshold_min, const float &fit_score_threshold_max,
         const float &angle_search_step, const int &area_batch_proc_number, const int &area_candidate_number,
         const float &min_dist_to_obstacle,
@@ -21,8 +21,8 @@ namespace relocalization_2d
         const int &map_free_threshold, const int &map_occupied_threshold,
         const float &sensing_radius, const float anchor_point_min_dist,
         const float &max_correspondence_distance, const float &transformation_epsilon, const float &euclidean_fitness_epsilon, const int &max_iterations)
-        : enable_visualization_(enable_visualization), use_reachability_sampling_(use_reachability_sampling),
-          rrt_min_expand_dist_(rrt_min_expand_dist), rrt_max_expand_dist_(rrt_max_expand_dist), reachability_sampling_duration_(reachability_sampling_duration),
+        : enable_visualization_(enable_visualization), use_traversability_sampling_(use_traversability_sampling),
+          rrt_min_expand_dist_(rrt_min_expand_dist), rrt_max_expand_dist_(rrt_max_expand_dist), traversability_sampling_duration_(traversability_sampling_duration),
           fit_score_threshold_min_(fit_score_threshold_min), fit_score_threshold_max_(fit_score_threshold_max),
           angle_search_step_(angle_search_step), area_batch_proc_number_(area_batch_proc_number), area_candidate_number_(area_candidate_number),
           min_dist_to_obstacle_(min_dist_to_obstacle),
@@ -34,8 +34,8 @@ namespace relocalization_2d
         sensing_radius_ += anchor_point_min_dist_;
 
         area_set_2d_instance_ = unique_ptr<area_set_2d::area_set_2d>(new area_set_2d::area_set_2d(
-            use_reachability_sampling,
-            rrt_min_expand_dist, rrt_max_expand_dist, reachability_sampling_duration,
+            use_traversability_sampling,
+            rrt_min_expand_dist, rrt_max_expand_dist, traversability_sampling_duration,
             map_free_threshold_, map_occupied_threshold_,
             sensing_radius_, anchor_point_min_dist_, angle_search_step_));
 

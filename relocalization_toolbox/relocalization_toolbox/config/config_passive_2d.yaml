@@ -17,7 +17,7 @@ relocalization_2d:
 
   # 激光雷达坐标系名称
   # LiDAR sensor frame name
-  lidar_frame: "base_laser"
+  lidar_frame: "lidar_link"
 
   # 是否在节点启动时从话题预加载地图
   # If to pre-fetch map data from topic when node started
@@ -36,8 +36,8 @@ relocalization_2d:
   enable_visualization: true
 
   # 是否启用可达性采样进行初始位姿采样
-  # Whether to use reachability-constrained sampling for initial pose candidates
-  use_reachability_sampling: true
+  # Whether to use traversability-constrained sampling for initial pose candidates
+  use_traversability_sampling: true
 
   # RRT 单次扩展的最小距离（米）
   # Minimum expansion distance for RRT (in meters)
@@ -58,10 +58,10 @@ relocalization_2d:
 
   # RRT 最长持续时间（秒）
   # Maximum RRT sampling duration (in seconds)
-  reachability_sampling_duration: 10
+  traversability_sampling_duration: 10
 
   # 匹配评分的早停阈值，当某个候选位姿置信度达到该阈值时，算法结束并输出结果
-  # Early-stopping threshold: if any candidate pose reaches this confidence, the algorithm stops and outputs the result
+  # early-terminationping threshold: if any candidate pose reaches this confidence, the algorithm stops and outputs the result
   fit_score_threshold_max: 0.97 # [0.0, 1.0]
 
   # 匹配评分的最小阈值，如果没有任何一个候选位姿置信度达到该阈值，则重定位失败

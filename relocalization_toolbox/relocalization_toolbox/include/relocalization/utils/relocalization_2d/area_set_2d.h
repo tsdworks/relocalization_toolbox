@@ -36,8 +36,8 @@ namespace area_set_2d
     class area_set_2d
     {
     public:
-        area_set_2d(const bool &use_reachability_sampling = false,
-                      const float &rrt_min_expand_dist = 0.5, const float &rrt_max_expand_dist = 1.0, const int &reachability_sampling_duration = 5,
+        area_set_2d(const bool &use_traversability_sampling = false,
+                      const float &rrt_min_expand_dist = 0.5, const float &rrt_max_expand_dist = 1.0, const int &traversability_sampling_duration = 5,
                       const int &map_free_threshold = 30, const int &map_occupied_threshold = 50,
                       const float &sensing_radius = 10.0f, const float &anchor_point_min_dist = 2.0f,
                       const float &angle_search_step = 0.174);
@@ -53,9 +53,9 @@ namespace area_set_2d
             const bool &enable_visualization = false);
 
     private:
-        bool use_reachability_sampling_;
+        bool use_traversability_sampling_;
         float rrt_min_expand_dist_, rrt_max_expand_dist_;
-        int reachability_sampling_duration_;
+        int traversability_sampling_duration_;
 
         int map_free_threshold_;
         int map_occupied_threshold_;

@@ -66,7 +66,7 @@ namespace sampling_2d
         rtree_ = bgi::rtree<RTreeValue, bgi::quadratic<16>>(initial_data.begin(), initial_data.end());
 #endif
 
-        ROS_INFO("Reachability sampling initialized successfully.");
+        ROS_INFO("traversability sampling initialized successfully.");
     }
 
     vector<geometry_msgs::Point32> sampling_2d::get_points(const int &timeout_secs)

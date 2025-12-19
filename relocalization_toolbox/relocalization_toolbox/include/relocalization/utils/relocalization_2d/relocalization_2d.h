@@ -40,8 +40,8 @@ namespace relocalization_2d
     public:
         relocalization_2d(
             // general parameters
-            const bool &enable_visualization = false, const bool &use_reachability_sampling = false,
-            const float &rrt_min_expand_dist = 0.5, const float &rrt_max_expand_dist = 1.0, const int &reachability_sampling_duration = 5,
+            const bool &enable_visualization = false, const bool &use_traversability_sampling = false,
+            const float &rrt_min_expand_dist = 0.5, const float &rrt_max_expand_dist = 1.0, const int &traversability_sampling_duration = 5,
             const float &fit_score_threshold_min = 0.8, const float &fit_score_threshold_max = 0.9,
             const float &angle_search_step = 0.174, const int &area_batch_proc_number = 100, const int &area_candidate_number = 10,
             const float &min_dist_to_obstacle = 0.4,
@@ -91,9 +91,9 @@ namespace relocalization_2d
         // general parameters
         bool enable_visualization_;
 
-        bool use_reachability_sampling_;
+        bool use_traversability_sampling_;
         float rrt_min_expand_dist_, rrt_max_expand_dist_;
-        int reachability_sampling_duration_;
+        int traversability_sampling_duration_;
 
         float fit_score_threshold_min_;
         float fit_score_threshold_max_;

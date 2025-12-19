@@ -49,9 +49,9 @@ int lidar_sampling_step;
 
 bool enable_visualization;
 
-bool use_reachability_sampling;
+bool use_traversability_sampling;
 float rrt_min_expand_dist, rrt_max_expand_dist;
-int reachability_sampling_duration;
+int traversability_sampling_duration;
 
 float fit_score_threshold_min, fit_score_threshold_max;
 float angle_search_step;
@@ -361,10 +361,10 @@ int main(int argc, char **argv)
 
     node_handle_param.param<bool>("enable_visualization", enable_visualization, true);
 
-    node_handle_param.param<bool>("use_reachability_sampling", use_reachability_sampling, false);
+    node_handle_param.param<bool>("use_traversability_sampling", use_traversability_sampling, false);
     node_handle_param.param<float>("rrt_min_expand_dist", rrt_min_expand_dist, 0.5);
     node_handle_param.param<float>("rrt_max_expand_dist", rrt_max_expand_dist, 1.0);
-    node_handle_param.param<int>("reachability_sampling_duration", reachability_sampling_duration, 5);
+    node_handle_param.param<int>("traversability_sampling_duration", traversability_sampling_duration, 5);
 
     node_handle_param.param<float>("fit_score_threshold_max", fit_score_threshold_max, 0.9f);
     node_handle_param.param<float>("fit_score_threshold_min", fit_score_threshold_min, 0.8f);
@@ -397,8 +397,8 @@ int main(int argc, char **argv)
     // initialize relocalization instance
     relocalization_2d_instance = unique_ptr<relocalization_2d::relocalization_2d>(
         new relocalization_2d::relocalization_2d(
-            enable_visualization, use_reachability_sampling,
-            rrt_min_expand_dist, rrt_max_expand_dist, reachability_sampling_duration,
+            enable_visualization, use_traversability_sampling,
+            rrt_min_expand_dist, rrt_max_expand_dist, traversability_sampling_duration,
             fit_score_threshold_min, fit_score_threshold_max, angle_search_step,
             area_batch_proc_number, area_candidate_number, min_dist_to_obstacle,
             sigma_hit, z_hit, z_rand, max_tolerance_dist,
