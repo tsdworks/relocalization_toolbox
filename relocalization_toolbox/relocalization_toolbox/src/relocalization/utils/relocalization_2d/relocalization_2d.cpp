@@ -176,12 +176,12 @@ namespace relocalization_2d
 #pragma omp for nowait
             for (int i = 0; i < static_cast<int>(area_set_raw_.size()); i++)
             {
-                const auto &submap_raw = area_set_raw_[i];
+                const auto &sub_area_raw = area_set_raw_[i];
 
                 float min_diff = numeric_limits<float>::max();
                 float best_value = 0.0f;
 
-                for (const auto &val : get<2>(submap_raw))
+                for (const auto &val : get<2>(sub_area_raw))
                 {
                     float diff = abs(val - scan_mean_dist);
                     if (diff < min_diff)
@@ -191,7 +191,7 @@ namespace relocalization_2d
                     }
                 }
 
-                local_result.emplace_back(get<0>(submap_raw), get<1>(submap_raw), best_value);
+                local_result.emplace_back(get<0>(sub_area_raw), get<1>(sub_area_raw), best_value);
             }
 
 #pragma omp critical
@@ -224,26 +224,26 @@ namespace relocalization_2d
 
             size_t end_idx = min(start_idx + area_batch_proc_number_, area_set_size);
 
-            vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, float>> submap_batch(
+            vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, float>> sub_area_batch(
                 area_set_.begin() + start_idx, area_set_.begin() + end_idx);
 
-            size_t submap_batch_size = submap_batch.size();
+            size_t sub_area_batch_size = sub_area_batch.size();
 
-            vector<tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float>> candidate_submaps;
+            vector<tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float>> candidate_sub_areas;
 
 #pragma omp parallel
             {
-                vector<tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float>> local_submaps;
+                vector<tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float>> local_sub_areas;
 
 #pragma omp for nowait
-                for (int i = 0; i < static_cast<int>(submap_batch_size); i++)
+                for (int i = 0; i < static_cast<int>(sub_area_batch_size); i++)
                 {
                     geometry_msgs::TransformStamped tf_map_to_lidar;
                     tf_map_to_lidar.header.frame_id = map_data_.header.frame_id;
                     tf_map_to_lidar.header.stamp = scan_data_.header.stamp;
                     tf_map_to_lidar.child_frame_id = scan_data_.header.frame_id;
-                    tf_map_to_lidar.transform.translation.x = get<0>(submap_batch[i]).x;
-                    tf_map_to_lidar.transform.translation.y = get<0>(submap_batch[i]).y;
+                    tf_map_to_lidar.transform.translation.x = get<0>(sub_area_batch[i]).x;
+                    tf_map_to_lidar.transform.translation.y = get<0>(sub_area_batch[i]).y;
                     tf_map_to_lidar.transform.rotation =
                         tf::createQuaternionMsgFromRollPitchYaw(lidar_reverted_ ? M_PI : 0, 0, 0);
 
@@ -272,24 +272,24 @@ namespace relocalization_2d
                         }
                     }
 
-                    tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float> candidate_submap;
-                    get<0>(candidate_submap) = confidence_score_area_best;
-                    get<1>(candidate_submap) = tf_map_to_lidar_area_best;
-                    get<2>(candidate_submap) = get<1>(submap_batch[i]);
-                    get<3>(candidate_submap) = get<2>(submap_batch[i]);
+                    tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float> candidate_sub_area;
+                    get<0>(candidate_sub_area) = confidence_score_area_best;
+                    get<1>(candidate_sub_area) = tf_map_to_lidar_area_best;
+                    get<2>(candidate_sub_area) = get<1>(sub_area_batch[i]);
+                    get<3>(candidate_sub_area) = get<2>(sub_area_batch[i]);
 
-                    local_submaps.emplace_back(candidate_submap);
+                    local_sub_areas.emplace_back(candidate_sub_area);
                 }
 
 #pragma omp critical
-                candidate_submaps.insert(candidate_submaps.end(),
-                                         local_submaps.begin(), local_submaps.end());
+                candidate_sub_areas.insert(candidate_sub_areas.end(),
+                                           local_sub_areas.begin(), local_sub_areas.end());
             }
 
             // sort region set
             ROS_INFO("Batch %d: Sorting region candidates...", batch_idx);
 
-            sort(candidate_submaps.begin(), candidate_submaps.end(),
+            sort(candidate_sub_areas.begin(), candidate_sub_areas.end(),
                  [](const auto &a, const auto &b)
                  {
                      return get<0>(a) > get<0>(b);
@@ -297,23 +297,23 @@ namespace relocalization_2d
 
             vector<tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float>> candidate_transformations;
 
-            size_t candidate_submap_size = candidate_submaps.size();
-            size_t try_num = min(candidate_submap_size, (size_t)area_candidate_number_);
+            size_t candidate_sub_area_size = candidate_sub_areas.size();
+            size_t try_num = min(candidate_sub_area_size, (size_t)area_candidate_number_);
 
 #pragma omp parallel for schedule(dynamic)
             for (int i = 0; i < static_cast<int>(try_num); i++)
             {
                 ROS_INFO("Batch %d: Trying region %d, anchor point (%.3f, %.3f, %.3f), score: %.4f.",
                          batch_idx, i,
-                         get<1>(candidate_submaps[i]).transform.translation.x,
-                         get<1>(candidate_submaps[i]).transform.translation.y,
-                         tf::getYaw(get<1>(candidate_submaps[i]).transform.rotation),
-                         get<0>(candidate_submaps[i]));
+                         get<1>(candidate_sub_areas[i]).transform.translation.x,
+                         get<1>(candidate_sub_areas[i]).transform.translation.y,
+                         tf::getYaw(get<1>(candidate_sub_areas[i]).transform.rotation),
+                         get<0>(candidate_sub_areas[i]));
 
                 ROS_INFO("Batch %d: Starting ICP alignment...", batch_idx);
 
                 geometry_msgs::TransformStamped tf_map_to_lidar_aligned =
-                    gicp_2d_instance_->match(get<1>(candidate_submaps[i]));
+                    gicp_2d_instance_->match(get<1>(candidate_sub_areas[i]));
 
                 ROS_INFO("Batch %d: Recomputing confidence score...", batch_idx);
 
@@ -325,18 +325,32 @@ namespace relocalization_2d
                 tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float> candidate_transformation;
                 get<0>(candidate_transformation) = confidence_score;
                 get<1>(candidate_transformation) = tf_map_to_lidar_aligned;
-                get<2>(candidate_transformation) = get<2>(candidate_submaps[i]);
-                get<3>(candidate_transformation) = get<3>(candidate_submaps[i]);
+                get<2>(candidate_transformation) = get<2>(candidate_sub_areas[i]);
+                get<3>(candidate_transformation) = get<3>(candidate_sub_areas[i]);
 
-                ROS_INFO("Batch %d: Registration completed, pose (%.3f, %.3f, %.3f), score: %.4f.",
-                         batch_idx,
-                         tf_map_to_lidar_aligned.transform.translation.x,
-                         tf_map_to_lidar_aligned.transform.translation.y,
-                         tf::getYaw(tf_map_to_lidar_aligned.transform.rotation),
-                         confidence_score);
+                float candidate_min_dist_to_obs = calc_min_dist_to_obs(map_data_, obs_dist_table_global_, get<1>(candidate_transformation));
+
+                if (candidate_min_dist_to_obs >= min_dist_to_obstacle_)
+                {
+                    ROS_INFO("Batch %d: Registration completed, pose (%.3f, %.3f, %.3f), score: %.4f.",
+                             batch_idx,
+                             tf_map_to_lidar_aligned.transform.translation.x,
+                             tf_map_to_lidar_aligned.transform.translation.y,
+                             tf::getYaw(tf_map_to_lidar_aligned.transform.rotation),
+                             confidence_score);
 
 #pragma omp critical
-                candidate_transformations.emplace_back(candidate_transformation);
+                    candidate_transformations.emplace_back(candidate_transformation);
+                }
+                else
+                {
+                    ROS_WARN("Batch %d: Registration completed, pose (%.3f, %.3f, %.3f), score: %.4f, not acceptable because of it is in the obstacle.",
+                             batch_idx,
+                             tf_map_to_lidar_aligned.transform.translation.x,
+                             tf_map_to_lidar_aligned.transform.translation.y,
+                             tf::getYaw(tf_map_to_lidar_aligned.transform.rotation),
+                             confidence_score);
+                }
             }
 
             if (candidate_transformations.empty())

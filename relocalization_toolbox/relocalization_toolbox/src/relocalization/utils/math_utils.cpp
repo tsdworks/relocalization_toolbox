@@ -949,14 +949,27 @@ tuple<bool, float, geometry_msgs::Point32> raycast_to_first_obstacle(const geome
 
     while (x >= 0 && x < width && y >= 0 && y < height)
     {
+        float wx = origin_x + (x + 0.5f) * resolution;
+        float wy = origin_y + (y + 0.5f) * resolution;
+        float distance = hypot(wx - p0.x, wy - p0.y);
+
+        if (distance > max_range)
+        {
+            get<0>(ret) = false;
+            get<1>(ret) = max_range;
+            geometry_msgs::Point32 end_pt;
+            end_pt.x = p0.x + max_range * cos(angle_rad);
+            end_pt.y = p0.y + max_range * sin(angle_rad);
+            end_pt.z = 0.0f;
+            get<2>(ret) = end_pt;
+
+            return ret;
+        }
+
         int index = y * width + x;
 
         if (data[index] > map_occupied_threshold)
         {
-            float wx = origin_x + (x + 0.5f) * resolution;
-            float wy = origin_y + (y + 0.5f) * resolution;
-            float distance = hypot(wx - p0.x, wy - p0.y);
-
             get<0>(ret) = true;
             get<1>(ret) = distance;
             geometry_msgs::Point32 hit_pt;
@@ -1388,6 +1401,21 @@ vector<float> calc_min_dist_to_obs_table(const nav_msgs::OccupancyGrid &grid,
     }
 
     return min_dist_table;
+}
+
+float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> min_dist_to_obs_table, const geometry_msgs::Point32 &position)
+{
+    return min_dist_to_obs_table[position_to_grid_index(position, grid)];
+}
+
+float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> min_dist_to_obs_table, const geometry_msgs::PoseStamped &pose)
+{
+    return calc_min_dist_to_obs(grid, min_dist_to_obs_table, create_point(pose.pose.position.x, pose.pose.position.y, pose.pose.position.z));
+}
+
+float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> min_dist_to_obs_table, const geometry_msgs::TransformStamped &tf)
+{
+    return calc_min_dist_to_obs(grid, min_dist_to_obs_table, create_point(tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z));
 }
 
 vector<int> resample_points(const vector<geometry_msgs::Point32> &points, const vector<int> &indices,

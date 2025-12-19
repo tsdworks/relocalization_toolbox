@@ -163,7 +163,7 @@ namespace area_set_2d
 
         for (const auto &[angle, result] : raycast_results)
         {
-            if (get<0>(result) && get<1>(result) > 0.0f)
+            if (get<0>(result) && get<1>(result) > 0.0f && get<1>(result) <= max_radius)
             {
                 if (scan_full_fov)
                 {
