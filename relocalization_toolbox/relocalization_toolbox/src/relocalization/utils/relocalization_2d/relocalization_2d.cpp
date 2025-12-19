@@ -303,19 +303,8 @@ namespace relocalization_2d
 #pragma omp parallel for schedule(dynamic)
             for (int i = 0; i < static_cast<int>(try_num); i++)
             {
-                ROS_INFO("Batch %d: Trying region %d, anchor point (%.3f, %.3f, %.3f), score: %.4f.",
-                         batch_idx, i,
-                         get<1>(candidate_sub_areas[i]).transform.translation.x,
-                         get<1>(candidate_sub_areas[i]).transform.translation.y,
-                         tf::getYaw(get<1>(candidate_sub_areas[i]).transform.rotation),
-                         get<0>(candidate_sub_areas[i]));
-
-                ROS_INFO("Batch %d: Starting ICP alignment...", batch_idx);
-
                 geometry_msgs::TransformStamped tf_map_to_lidar_aligned =
                     gicp_2d_instance_->match(get<1>(candidate_sub_areas[i]));
-
-                ROS_INFO("Batch %d: Recomputing confidence score...", batch_idx);
 
                 float confidence_score = likelihood_field_2d_instance_->get_confidence(
                     tf_map_to_lidar_aligned,
@@ -332,24 +321,8 @@ namespace relocalization_2d
 
                 if (candidate_min_dist_to_obs >= min_dist_to_obstacle_)
                 {
-                    ROS_INFO("Batch %d: Registration completed, pose (%.3f, %.3f, %.3f), score: %.4f.",
-                             batch_idx,
-                             tf_map_to_lidar_aligned.transform.translation.x,
-                             tf_map_to_lidar_aligned.transform.translation.y,
-                             tf::getYaw(tf_map_to_lidar_aligned.transform.rotation),
-                             confidence_score);
-
 #pragma omp critical
                     candidate_transformations.emplace_back(candidate_transformation);
-                }
-                else
-                {
-                    ROS_WARN("Batch %d: Registration completed, pose (%.3f, %.3f, %.3f), score: %.4f, not acceptable because of it is in the obstacle.",
-                             batch_idx,
-                             tf_map_to_lidar_aligned.transform.translation.x,
-                             tf_map_to_lidar_aligned.transform.translation.y,
-                             tf::getYaw(tf_map_to_lidar_aligned.transform.rotation),
-                             confidence_score);
                 }
             }
 
