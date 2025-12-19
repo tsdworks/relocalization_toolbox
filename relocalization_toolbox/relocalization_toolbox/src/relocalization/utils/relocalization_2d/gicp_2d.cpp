@@ -7,7 +7,7 @@
  *    GPL-3.0 License
  */
 
-#include <utils/2d/gicp_2d.h>
+#include <relocalization/utils/relocalization_2d/gicp_2d.h>
 
 namespace gicp_2d
 {

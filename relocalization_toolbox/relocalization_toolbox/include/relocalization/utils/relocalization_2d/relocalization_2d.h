@@ -14,7 +14,7 @@
 #include <random>
 #include <map>
 #include <unordered_map>
-#include <utils/math_utils.h>
+#include <relocalization/utils/math_utils.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <tf/tf.h>
@@ -23,12 +23,13 @@
 #include <sensor_msgs/LaserScan.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/PoseArray.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
-#include <utils/2d/map_io_2d.h>
-#include <utils/2d/likelihood_field_2d.h>
-#include <utils/2d/submap_set_2d.h>
-#include <utils/2d/gicp_2d.h>
+#include <relocalization/utils/relocalization_2d/map_io_2d.h>
+#include <relocalization/utils/relocalization_2d/likelihood_field_2d.h>
+#include <relocalization/utils/relocalization_2d/area_set_2d.h>
+#include <relocalization/utils/relocalization_2d/gicp_2d.h>
 
 using namespace std;
 
@@ -56,11 +57,35 @@ namespace relocalization_2d
 
         void set_map(const nav_msgs::OccupancyGrid &map);
 
+        tuple<bool, vector<float>, vector<geometry_msgs::TransformStamped>> get_candidates(
+            const sensor_msgs::LaserScan &scan,
+            const bool &lidar_reverted,
+            const int &lidar_sampling_step,
+            const nav_msgs::OccupancyGrid &map,
+            const int &max_num_of_candidates = 1,
+            const float &min_trans_diff_between_candidates = 0.1f,
+            const float &min_yaw_diff_between_candidates = 0.1f);
         tuple<bool, float, geometry_msgs::TransformStamped> relocalize(
             const sensor_msgs::LaserScan &scan,
             const bool &lidar_reverted,
             const int &lidar_sampling_step,
-            const nav_msgs::OccupancyGrid &map);
+            const nav_msgs::OccupancyGrid &map)
+        {
+            tuple<bool, float, geometry_msgs::TransformStamped> ret;
+            get<0>(ret) = false;
+            get<1>(ret) = 0.0f;
+
+            auto cands = get_candidates(scan, lidar_reverted, lidar_sampling_step, map, 1);
+
+            if (!get<1>(cands).empty() && !get<2>(cands).empty())
+            {
+                get<0>(ret) = get<0>(cands);
+                get<1>(ret) = get<1>(cands)[0];
+                get<2>(ret) = get<2>(cands)[0];
+            }
+
+            return ret;
+        }
 
     private:
         // general parameters
@@ -103,19 +128,15 @@ namespace relocalization_2d
         sensor_msgs::LaserScan scan_data_;
         nav_msgs::OccupancyGrid map_data_;
         vector<float> obs_dist_table_global_;
-        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> submap_set_raw_;
-        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, float>> submap_set_;
+        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> area_set_raw_;
+        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, float>> area_set_;
 
-        unique_ptr<submap_set_2d::submap_set_2d> submap_set_2d_instance_;
+        unique_ptr<area_set_2d::area_set_2d> area_set_2d_instance_;
         unique_ptr<likelihood_field_2d::likelihood_field_2d> likelihood_field_2d_instance_;
         unique_ptr<gicp_2d::gicp_2d> gicp_2d_instance_;
 
         ros::NodeHandle node_handle_;
-        ros::Publisher submap_pub_;
-
-        float calc_confidence(
-            const nav_msgs::OccupancyGrid &map,
-            const float &likelihood_field_score, const float &mean_min_dist, const float &consistency_score);
+        ros::Publisher candidates_pub_;
     };
 }
 

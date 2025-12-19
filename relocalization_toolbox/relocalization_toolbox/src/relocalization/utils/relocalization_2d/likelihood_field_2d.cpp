@@ -7,15 +7,17 @@
  *    GPL-3.0 License
  */
 
-#include <utils/2d/likelihood_field_2d.h>
+#include <relocalization/utils/relocalization_2d/likelihood_field_2d.h>
 
 namespace likelihood_field_2d
 {
     likelihood_field_2d::likelihood_field_2d(const float &sigma_hit, const float &z_hit, const float &z_rand, const int &map_occupied_threshold)
         : sigma_hit_(sigma_hit), z_hit_(z_hit), z_rand_(z_rand), map_occupied_threshold_(map_occupied_threshold)
     {
-        debug_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>(
-            "transformed_beam_points", 1);
+        debug_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("relocalization_transformed_beam_points", 1);
+
+        tf_buffer_ = make_unique<tf2_ros::Buffer>();
+        tf_listener_ = make_unique<tf2_ros::TransformListener>(*tf_buffer_);
 
         return;
     };
@@ -181,5 +183,33 @@ namespace likelihood_field_2d
         return get_likelihood_field_score(tf_map_to_lidar, scan, map, distance_map,
                                           lidar_sampling_step,
                                           enable_visualization);
+    }
+
+    float likelihood_field_2d::get_confidence(const geometry_msgs::TransformStamped &tf_map_to_lidar,
+                                              const sensor_msgs::LaserScan &scan,
+                                              const nav_msgs::OccupancyGrid &map,
+                                              const vector<float> &obs_dist_table,
+                                              const float &max_tolerance_dist,
+                                              const int &lidar_sampling_step,
+                                              const bool &enable_visualization)
+    {
+        auto lf_score = get_likelihood_field_score(
+            tf_map_to_lidar, scan, map, obs_dist_table, lidar_sampling_step, enable_visualization);
+        const float likelihood_field_score = get<0>(lf_score);
+        const float mean_min_dist = get<1>(lf_score);
+        const float consistency_score = get<2>(lf_score);
+
+        float p = exp(likelihood_field_score);
+
+        float resolution = map.info.resolution;
+        float min_dist = resolution * 0.5f;
+        float max_dist = max_tolerance_dist;
+
+        float clamped_dist = min(max(mean_min_dist, min_dist), max_dist);
+        float d_score = 1.0f - ((clamped_dist - min_dist) / (max_dist - min_dist));
+
+        float confidence = pow(p * d_score * consistency_score, 1.0f / 3.0f);
+
+        return confidence;
     }
 };

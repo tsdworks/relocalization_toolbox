@@ -7,7 +7,7 @@
  *    GPL-3.0 License
  */
 
-#include <utils/math_utils.h>
+#include <relocalization/utils/math_utils.h>
 
 geometry_msgs::Polygon transform_footprint(geometry_msgs::PoseWithCovarianceStamped &pose,
                                            geometry_msgs::Polygon &footprint)

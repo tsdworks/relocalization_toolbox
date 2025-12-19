@@ -14,8 +14,8 @@
 #include <random>
 #include <map>
 #include <unordered_map>
-#include <utils/math_utils.h>
-#include <utils/2d/rrt_common.h>
+#include <relocalization/utils/math_utils.h>
+#include <relocalization/utils/relocalization_2d/rrt_common.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <tf/tf.h>

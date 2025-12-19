@@ -1,0 +1,12 @@
+uint8 mode
+uint8 MODE_MAP_FROM_TOPIC = 0
+uint8 MODE_MAP_FROM_FILE = 1
+string path
+string name
+int32 max_num_of_candidates
+---
+string result
+int32 num_of_candidates
+geometry_msgs/TransformStamped[] candidates_tf_map_to_base
+geometry_msgs/PoseWithCovarianceStamped[] candidates_robot_pose_on_map
+float32[] scores

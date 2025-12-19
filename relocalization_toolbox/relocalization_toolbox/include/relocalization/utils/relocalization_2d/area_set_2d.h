@@ -7,16 +7,16 @@
  *    GPL-3.0 License
  */
 
-#ifndef SUBMAP_SET_2D_H
-#define SUBMAP_SET_2D_H
+#ifndef AREA_SET_2D_H
+#define AREA_SET_2D_H
 
 #include <ros/ros.h>
 #include <random>
 #include <map>
 #include <unordered_map>
-#include <utils/math_utils.h>
-#include <utils/2d/sector_query_2d.h>
-#include <utils/2d/sampling_2d.h>
+#include <relocalization/utils/math_utils.h>
+#include <relocalization/utils/relocalization_2d/sector_query_2d.h>
+#include <relocalization/utils/relocalization_2d/sampling_2d.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <tf/tf.h>
@@ -31,19 +31,19 @@
 
 using namespace std;
 
-namespace submap_set_2d
+namespace area_set_2d
 {
-    class submap_set_2d
+    class area_set_2d
     {
     public:
-        submap_set_2d(const bool &use_reachability_sampling = false,
+        area_set_2d(const bool &use_reachability_sampling = false,
                       const float &rrt_min_expand_dist = 0.5, const float &rrt_max_expand_dist = 1.0, const int &reachability_sampling_duration = 5,
                       const int &map_free_threshold = 30, const int &map_occupied_threshold = 50,
                       const float &sensing_radius = 10.0f, const float &anchor_point_min_dist = 2.0f,
                       const float &angle_search_step = 0.174);
-        ~submap_set_2d() {};
+        ~area_set_2d() {};
 
-        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> get_submap_set(
+        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> get_area_set(
             const nav_msgs::OccupancyGrid &map,
             const sensor_msgs::LaserScan &scan,
             const bool &lidar_reverted,
@@ -66,7 +66,7 @@ namespace submap_set_2d
         ros::NodeHandle node_handle_;
         ros::Publisher anchor_point_pub_;
 
-        nav_msgs::OccupancyGrid get_submap(const nav_msgs::OccupancyGrid &map,
+        nav_msgs::OccupancyGrid get_area_submap(const nav_msgs::OccupancyGrid &map,
                                            const sensor_msgs::LaserScan &scan,
                                            const bool &lidar_reverted,
                                            const int &lidar_sampling_step,

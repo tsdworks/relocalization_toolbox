@@ -7,7 +7,7 @@
  *    GPL-3.0 License
  */
 
-#include <utils/2d/map_io_2d.h>
+#include <relocalization/utils/relocalization_2d/map_io_2d.h>
 
 tuple<bool, nav_msgs::OccupancyGrid> load_map_2d(const string &path, const string &name, const string &map_frame)
 {

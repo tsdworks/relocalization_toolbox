@@ -17,7 +17,7 @@ relocalization_2d:
 
   # 激光雷达坐标系名称
   # LiDAR sensor frame name
-  lidar_frame: "lidar_link"
+  lidar_frame: "base_laser"
 
   # 是否在节点启动时从话题预加载地图
   # If to pre-fetch map data from topic when node started

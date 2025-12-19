@@ -7,7 +7,7 @@
  *    GPL-3.0 License
  */
 
-#include <utils/2d/sampling_2d.h>
+#include <relocalization/utils/relocalization_2d/sampling_2d.h>
 
 namespace sampling_2d
 {

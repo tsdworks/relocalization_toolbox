@@ -17,6 +17,7 @@ add_service_files(
   FILES
   relocalization_request.srv
   initial_pose_request.srv
+  get_candidates_request.srv
 )
 
 add_action_files(

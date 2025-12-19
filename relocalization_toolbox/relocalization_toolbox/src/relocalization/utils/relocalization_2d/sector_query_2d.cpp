@@ -7,7 +7,7 @@
  *    GPL-3.0 License
  */
 
-#include <utils/2d/sector_query_2d.h>
+#include <relocalization/utils/relocalization_2d/sector_query_2d.h>
 
 namespace sector_query_2d
 {

@@ -6,4 +6,5 @@ string name
 ---
 string result
 geometry_msgs/TransformStamped tf_map_to_base
+geometry_msgs/PoseWithCovarianceStamped robot_pose_on_map
 float32 score

@@ -22,13 +22,14 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
 #include <common/common_state_code.h>
-#include <utils/2d/relocalization_2d.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <relocalization_toolbox_msgs/initial_pose_request.h>
 #include <relocalization_toolbox_msgs/relocalization_request.h>
+#include <relocalization_toolbox_msgs/get_candidates_request.h>
+#include <relocalization/utils/relocalization_2d/relocalization_2d.h>
 
 #define NODE_NAME "relocalization_2d_handler"
 #define TAG "2D Global Relocalization"
@@ -86,6 +87,7 @@ geometry_msgs::TransformStamped tf_lidar_to_base;
 // relocalization services
 ros::ServiceServer relocalization_server;
 ros::ServiceServer relocalization_simple_server;
+ros::ServiceServer get_candidates_server;
 // relocalization client and publisher
 ros::ServiceClient set_init_pose_client;
 ros::Publisher init_pose_pub;
@@ -174,6 +176,8 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
                 init_pose.pose.pose.position.z = res.tf_map_to_base.transform.translation.z;
                 init_pose.pose.pose.orientation = res.tf_map_to_base.transform.rotation;
 
+                res.robot_pose_on_map = init_pose;
+
                 if (publish_init_pose_topic)
                 {
                     init_pose_pub.publish(init_pose);
@@ -189,7 +193,7 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
             }
             else
             {
-                ROS_ERROR("%s: Relocalization failed. Score below threshold.", TAG);
+                ROS_ERROR("%s: Relocalization failed. All scores are lower than the threshold.", TAG);
 
                 res.result = CMD_RESPONSE_ERROR;
             }
@@ -220,6 +224,114 @@ bool relocalization_simple_request_callback(std_srvs::Empty::Request &req,
     srv.request.mode = srv.request.MODE_MAP_FROM_TOPIC;
 
     return relocalization_request_callback(srv.request, srv.response);
+}
+
+bool get_candidates_request_callback(relocalization_toolbox_msgs::get_candidates_request::Request &req,
+                                     relocalization_toolbox_msgs::get_candidates_request::Response &res)
+{
+    bool ret = false;
+
+    // get current scan
+    auto scan_data_ptr = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan", ros::Duration(2.0));
+
+    if (scan_data_ptr)
+    {
+        scan_data = *scan_data_ptr;
+        scan_data.header.frame_id = lidar_frame;
+
+        // check request mode
+        if (req.mode == req.MODE_MAP_FROM_FILE)
+        {
+            // load map from file
+            auto data_loaded = load_map_2d(req.path, req.name, map_frame);
+            map_data_received = get<0>(data_loaded);
+
+            if (map_data_received)
+            {
+                map_data = get<1>(data_loaded);
+            }
+        }
+        else if (req.mode == req.MODE_MAP_FROM_TOPIC)
+        {
+            // load map from topic
+            auto map_data_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map", ros::Duration(5.0));
+
+            if (map_data_ptr)
+            {
+                map_data = *map_data_ptr;
+                map_data.header.frame_id = map_frame;
+                map_data_received = true;
+            }
+        }
+        else
+        {
+            ROS_ERROR("%s: Request failed, invalid map input mode.", TAG);
+
+            res.result = CMD_RESPONSE_ERROR;
+        }
+
+        if (map_data_received)
+        {
+            // Start to get candidates
+            auto reloc_candidates = relocalization_2d_instance->get_candidates(
+                scan_data, lidar_reverted, lidar_sampling_step, map_data, req.max_num_of_candidates);
+
+            if (get<0>(reloc_candidates))
+            {
+                res.result = CMD_RESPONSE_OK;
+                res.scores = get<1>(reloc_candidates);
+                res.num_of_candidates = res.scores.size();
+
+                // get transformations
+                for (const auto &tf_msg_map_lidar : get<2>(reloc_candidates))
+                {
+                    tf2::Transform tf_map_lidar, tf_lidar_base, tf_map_base;
+                    tf2::fromMsg(tf_msg_map_lidar.transform, tf_map_lidar);
+                    tf2::fromMsg(tf_lidar_to_base.transform, tf_lidar_base);
+                    tf_map_base = tf_map_lidar * tf_lidar_base;
+                    geometry_msgs::TransformStamped candidate_tf_map_to_base;
+                    candidate_tf_map_to_base.header.stamp = tf_msg_map_lidar.header.stamp;
+                    candidate_tf_map_to_base.header.frame_id = map_frame;
+                    candidate_tf_map_to_base.child_frame_id = base_frame;
+                    candidate_tf_map_to_base.transform = tf2::toMsg(tf_map_base);
+
+                    res.candidates_tf_map_to_base.emplace_back(candidate_tf_map_to_base);
+
+                    geometry_msgs::PoseWithCovarianceStamped candidate_pose;
+                    candidate_pose.header.stamp = ros::Time::now();
+                    candidate_pose.header.frame_id = map_frame;
+                    candidate_pose.pose.pose.position.x = candidate_tf_map_to_base.transform.translation.x;
+                    candidate_pose.pose.pose.position.y = candidate_tf_map_to_base.transform.translation.y;
+                    candidate_pose.pose.pose.position.z = candidate_tf_map_to_base.transform.translation.z;
+                    candidate_pose.pose.pose.orientation = candidate_tf_map_to_base.transform.rotation;
+
+                    res.candidates_robot_pose_on_map.emplace_back(candidate_pose);
+                }
+            }
+            else
+            {
+                ROS_ERROR("%s: Get candidates failed. All scores are lower than the threshold.", TAG);
+
+                res.result = CMD_RESPONSE_ERROR;
+            }
+        }
+        else
+        {
+            ROS_ERROR("%s: Request failed. No map data available.", TAG);
+
+            res.result = CMD_RESPONSE_ERROR;
+        }
+    }
+    else
+    {
+        ROS_ERROR("%s: Request failed. No scan data received.", TAG);
+
+        res.result = CMD_RESPONSE_ERROR;
+    }
+
+    ret = true;
+
+    return ret;
 }
 
 int main(int argc, char **argv)
@@ -319,6 +431,7 @@ int main(int argc, char **argv)
     // initialize services and publishers
     relocalization_server = node_handle.advertiseService("relocalization_request", relocalization_request_callback);
     relocalization_simple_server = node_handle.advertiseService("relocalization_simple_request", relocalization_simple_request_callback);
+    get_candidates_server = node_handle.advertiseService("get_relocalization_candidates_request", get_candidates_request_callback);
     set_init_pose_client = node_handle.serviceClient<relocalization_toolbox_msgs::initial_pose_request>("set_init_pose_request");
     init_pose_pub = node_handle.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose", 1);
 

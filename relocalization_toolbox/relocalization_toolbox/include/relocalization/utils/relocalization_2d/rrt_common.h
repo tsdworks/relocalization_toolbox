@@ -12,7 +12,7 @@
 
 #include <ros/ros.h>
 #include <unordered_map>
-#include <utils/math_utils.h>
+#include <relocalization/utils/math_utils.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Point32.h>
 

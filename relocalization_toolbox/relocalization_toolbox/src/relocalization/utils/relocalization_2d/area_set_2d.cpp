@@ -7,11 +7,11 @@
  *    GPL-3.0 License
  */
 
-#include <utils/2d/submap_set_2d.h>
+#include <relocalization/utils/relocalization_2d/area_set_2d.h>
 
-namespace submap_set_2d
+namespace area_set_2d
 {
-    submap_set_2d::submap_set_2d(const bool &use_reachability_sampling,
+    area_set_2d::area_set_2d(const bool &use_reachability_sampling,
                                  const float &rrt_min_expand_dist, const float &rrt_max_expand_dist, const int &reachability_sampling_duration,
                                  const int &map_free_threshold, const int &map_occupied_threshold,
                                  const float &sensing_radius, const float &anchor_point_min_dist,
@@ -22,13 +22,12 @@ namespace submap_set_2d
           sensing_radius_(sensing_radius), anchor_point_min_dist_(anchor_point_min_dist),
           angle_search_step_(angle_search_step)
     {
-        anchor_point_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>(
-            "submap_anchor_points", 1);
+        anchor_point_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("relocalization_anchor_points", 1);
 
         return;
     };
 
-    nav_msgs::OccupancyGrid submap_set_2d::get_submap(const nav_msgs::OccupancyGrid &map,
+    nav_msgs::OccupancyGrid area_set_2d::get_area_submap(const nav_msgs::OccupancyGrid &map,
                                                       const sensor_msgs::LaserScan &scan,
                                                       const bool &lidar_reverted,
                                                       const int &lidar_sampling_step,
@@ -121,7 +120,7 @@ namespace submap_set_2d
         return ret;
     }
 
-    vector<float> submap_set_2d::get_mean_dist_list(const nav_msgs::OccupancyGrid &map,
+    vector<float> area_set_2d::get_mean_dist_list(const nav_msgs::OccupancyGrid &map,
                                                     const sensor_msgs::LaserScan &scan,
                                                     const bool &lidar_reverted,
                                                     const int &lidar_sampling_step,
@@ -220,7 +219,7 @@ namespace submap_set_2d
         return ret;
     }
 
-    vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> submap_set_2d::get_submap_set(const nav_msgs::OccupancyGrid &map,
+    vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> area_set_2d::get_area_set(const nav_msgs::OccupancyGrid &map,
                                                                                                                 const sensor_msgs::LaserScan &scan,
                                                                                                                 const bool &lidar_reverted,
                                                                                                                 const int &lidar_sampling_step,
