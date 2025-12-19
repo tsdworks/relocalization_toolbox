@@ -116,7 +116,7 @@ relocalization_2d:
 
   # ICP 迭代中位姿变换的最小变化量（收敛判据）
   # Minimum transformation change threshold for ICP convergence
-  transformation_epsilon: 1e-8
+  transformation_epsilon: 1e-6
 
   # ICP 迭代中欧式距离的最小平均误差（收敛判据）
   # Minimum average Euclidean fitness error for ICP convergence
@@ -124,4 +124,4 @@ relocalization_2d:
 
   # ICP 最大迭代次数
   # Maximum number of ICP iterations
-  max_iterations: 200
+  max_iterations: 100

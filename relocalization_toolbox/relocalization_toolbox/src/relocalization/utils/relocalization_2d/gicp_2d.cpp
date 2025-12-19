@@ -68,8 +68,8 @@ namespace gicp_2d
 
                 if (map.data[idx] >= map_occupied_threshold_)
                 {
-                    float wx = map.info.origin.position.x + x * resolution;
-                    float wy = map.info.origin.position.y + y * resolution;
+                    float wx = map.info.origin.position.x + (x + 0.5f) * resolution;
+                    float wy = map.info.origin.position.y + (y + 0.5f) * resolution;
 
                     pcl::PointXYZ point;
                     point.x = wx;

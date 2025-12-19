@@ -62,9 +62,7 @@ namespace relocalization_2d
             const bool &lidar_reverted,
             const int &lidar_sampling_step,
             const nav_msgs::OccupancyGrid &map,
-            const int &max_num_of_candidates = 1,
-            const float &min_trans_diff_between_candidates = 0.1f,
-            const float &min_yaw_diff_between_candidates = 0.1f);
+            const int &max_num_of_candidates = 1);
         tuple<bool, float, geometry_msgs::TransformStamped> relocalize(
             const sensor_msgs::LaserScan &scan,
             const bool &lidar_reverted,

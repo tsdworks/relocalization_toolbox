@@ -73,9 +73,7 @@ namespace relocalization_2d
         const bool &lidar_reverted,
         const int &lidar_sampling_step,
         const nav_msgs::OccupancyGrid &map,
-        const int &max_num_of_candidates,
-        const float &min_trans_diff_between_candidates,
-        const float &min_yaw_diff_between_candidates)
+        const int &max_num_of_candidates)
     {
         tuple<bool, vector<float>, vector<geometry_msgs::TransformStamped>> ret;
         get<0>(ret) = false;
@@ -459,8 +457,8 @@ namespace relocalization_2d
                     float yaw0 = tf::getYaw(get<1>(all_candidates[i]).transform.rotation);
                     float yaw1 = tf::getYaw(get<2>(ret)[j].transform.rotation);
 
-                    if (calculate_distance(p0, p1) <= min_trans_diff_between_candidates &&
-                        abs(angles::shortest_angular_distance(yaw0, yaw1)) <= min_yaw_diff_between_candidates)
+                    if (calculate_distance(p0, p1) <= anchor_point_min_dist_ &&
+                        abs(angles::shortest_angular_distance(yaw0, yaw1)) <= angle_search_step_)
                     {
                         near_found = true;
 
