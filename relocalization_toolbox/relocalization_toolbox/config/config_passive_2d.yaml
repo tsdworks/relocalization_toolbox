@@ -52,8 +52,8 @@ relocalization_2d:
   # anchor_point_min_dist: 1.0
   anchor_point_min_dist: 0.6
 
-  # 采样点与障碍物的最小距离（米）
-  # Minimum distance from sampled pose to obstacles (in meters)
+  # 雷达位置采样点与障碍物的最小距离（米）
+  # Minimum distance from sampled LiDAR pose to obstacles (in meters)
   min_dist_to_obstacle: 0.21
 
   # RRT 最长持续时间（秒）
