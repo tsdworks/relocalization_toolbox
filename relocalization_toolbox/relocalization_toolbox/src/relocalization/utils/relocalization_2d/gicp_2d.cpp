@@ -118,8 +118,6 @@ namespace gicp_2d
             tf(0, 0), tf(0, 1), tf(0, 2),
             tf(1, 0), tf(1, 1), tf(1, 2),
             tf(2, 0), tf(2, 1), tf(2, 2));
-        double roll, pitch, yaw;
-        rot.getRPY(roll, pitch, yaw);
         tf2::Quaternion q;
         rot.getRotation(q);
         q.normalize();

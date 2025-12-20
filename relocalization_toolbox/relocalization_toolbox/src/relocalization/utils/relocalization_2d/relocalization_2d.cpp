@@ -151,6 +151,7 @@ namespace relocalization_2d
         float scan_mean_dist = calc_laser_mean_dist(scan_data_, sensing_radius_, lidar_sampling_step_);
 
         auto sampling_end_time = ros::WallTime::now();
+        auto matching_end_time = ros::WallTime::now();
 
         ROS_INFO("Total %ld observation regions available.", area_set_raw_.size());
 
@@ -212,6 +213,7 @@ namespace relocalization_2d
         geometry_msgs::TransformStamped trans_best;
         float loc_conf_best = 0.0f;
         bool found_valid = false;
+        bool early_terminated = false;
 
         bool early_termination_mode = (max_num_of_candidates <= 1);
         vector<tuple<float, geometry_msgs::TransformStamped>> all_candidates;
@@ -358,6 +360,9 @@ namespace relocalization_2d
                     trans_best = get<1>(candidate_transformations[0]);
 
                     found_valid = true;
+                    early_terminated = true;
+
+                    matching_end_time = ros::WallTime::now();
 
                     break;
                 }
@@ -412,7 +417,10 @@ namespace relocalization_2d
             start_idx = end_idx;
         }
 
-        auto matching_end_time = ros::WallTime::now();
+        if (!early_terminated)
+        {
+            matching_end_time = ros::WallTime::now();
+        }
 
         ROS_INFO("Sampling time: %.3lfs, matching time: %.3lfs.",
                  (sampling_end_time - sampling_start_time).toSec(),

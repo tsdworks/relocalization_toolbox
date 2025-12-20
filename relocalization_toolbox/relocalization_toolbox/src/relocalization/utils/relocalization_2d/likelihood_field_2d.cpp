@@ -38,26 +38,35 @@ namespace likelihood_field_2d
         float total_dist = 0;
         int valid_beam_count = 0;
 
+        float delta = scan.angle_increment * lidar_sampling_step;
+        float c = cos(scan.angle_min);
+        float s = sin(scan.angle_min);
+        float cd = cos(delta);
+        float sd = sin(delta);
+
         for (size_t i = 0; i < scan.ranges.size(); i += lidar_sampling_step, angle += scan.angle_increment * lidar_sampling_step)
         {
-            if (scan.ranges[i] < scan.range_min || scan.ranges[i] > scan.range_max)
+            if (scan.ranges[i] >= scan.range_min && scan.ranges[i] <= scan.range_max)
             {
-                continue;
+                geometry_msgs::PointStamped p_lidar, p_map;
+                p_lidar.header.frame_id = scan.header.frame_id;
+                p_lidar.point.x = scan.ranges[i] * c;
+                p_lidar.point.y = scan.ranges[i] * s;
+                tf2::doTransform(p_lidar, p_map, tf_map_to_lidar);
+
+                float dist = calc_min_dist_to_obs(map, obs_dist_table,
+                                                  create_point(p_map.point.x, p_map.point.y, p_map.point.z));
+                float log_p = log(gaussian_prob(dist) + 1e-6f);
+                loglik_dist_pairs.emplace_back(log_p, dist);
+                total_dist += dist;
+
+                valid_beam_count++;
             }
 
-            geometry_msgs::PointStamped p_lidar, p_map;
-            p_lidar.header.frame_id = scan.header.frame_id;
-            p_lidar.point.x = scan.ranges[i] * cos(angle);
-            p_lidar.point.y = scan.ranges[i] * sin(angle);
-            tf2::doTransform(p_lidar, p_map, tf_map_to_lidar);
-
-            float dist = calc_min_dist_to_obs(map, obs_dist_table,
-                                              create_point(p_map.point.x, p_map.point.y, p_map.point.z));
-            float log_p = log(gaussian_prob(dist) + 1e-6f);
-            loglik_dist_pairs.emplace_back(log_p, dist);
-            total_dist += dist;
-
-            valid_beam_count++;
+            float c_new = c * cd - s * sd;
+            float s_new = s * cd + c * sd;
+            c = c_new;
+            s = s_new;
         }
 
         if (valid_beam_count < 5)
