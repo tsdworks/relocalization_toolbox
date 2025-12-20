@@ -42,28 +42,24 @@ namespace likelihood_field_2d
                                                               const sensor_msgs::LaserScan &scan,
                                                               const nav_msgs::OccupancyGrid &map,
                                                               const vector<float> &obs_dist_table,
-                                                              const int &lidar_sampling_step,
-                                                              const bool &enable_visualization = false);
+                                                              const int &lidar_sampling_step);
         tuple<float, float, float> get_likelihood_field_score(const geometry_msgs::TransformStamped &tf_map_to_lidar,
                                                               const sensor_msgs::LaserScan &scan,
                                                               const nav_msgs::OccupancyGrid &map,
-                                                              const int &lidar_sampling_step,
-                                                              const bool &enable_visualization = false);
+                                                              const int &lidar_sampling_step);
         float get_confidence(const geometry_msgs::TransformStamped &tf_map_to_lidar,
                              const sensor_msgs::LaserScan &scan,
                              const nav_msgs::OccupancyGrid &map,
                              const vector<float> &obs_dist_table,
                              const float &max_tolerance_dist,
-                             const int &lidar_sampling_step,
-                             const bool &enable_visualization = false);
+                             const int &lidar_sampling_step);
         float get_confidence(const geometry_msgs::PoseWithCovarianceStamped &robot_pose,
                              const sensor_msgs::LaserScan &scan,
                              const nav_msgs::OccupancyGrid &map,
                              const vector<float> &obs_dist_table,
                              const float &max_tolerance_dist,
                              const int &lidar_sampling_step,
-                             const string &base_frame = "base_link",
-                             const bool &enable_visualization = false)
+                             const string &base_frame = "base_link")
         {
             try
             {
@@ -98,8 +94,7 @@ namespace likelihood_field_2d
                                   map,
                                   obs_dist_table,
                                   max_tolerance_dist,
-                                  lidar_sampling_step,
-                                  enable_visualization);
+                                  lidar_sampling_step);
         }
 
     private:
@@ -109,9 +104,6 @@ namespace likelihood_field_2d
         int map_occupied_threshold_ = 50;
 
         float gaussian_prob(float dist);
-
-        ros::NodeHandle node_handle_;
-        ros::Publisher debug_cloud_pub_;
 
         unique_ptr<tf2_ros::Buffer> tf_buffer_;
         unique_ptr<tf2_ros::TransformListener> tf_listener_;

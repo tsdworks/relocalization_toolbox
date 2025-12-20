@@ -1403,17 +1403,17 @@ vector<float> calc_min_dist_to_obs_table(const nav_msgs::OccupancyGrid &grid,
     return min_dist_table;
 }
 
-float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> min_dist_to_obs_table, const geometry_msgs::Point32 &position)
+float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> &min_dist_to_obs_table, const geometry_msgs::Point32 &position)
 {
     return min_dist_to_obs_table[position_to_grid_index(position, grid)];
 }
 
-float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> min_dist_to_obs_table, const geometry_msgs::PoseStamped &pose)
+float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> &min_dist_to_obs_table, const geometry_msgs::PoseStamped &pose)
 {
     return calc_min_dist_to_obs(grid, min_dist_to_obs_table, create_point(pose.pose.position.x, pose.pose.position.y, pose.pose.position.z));
 }
 
-float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> min_dist_to_obs_table, const geometry_msgs::TransformStamped &tf)
+float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> &min_dist_to_obs_table, const geometry_msgs::TransformStamped &tf)
 {
     return calc_min_dist_to_obs(grid, min_dist_to_obs_table, create_point(tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z));
 }

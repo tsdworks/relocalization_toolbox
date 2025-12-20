@@ -14,8 +14,6 @@ namespace likelihood_field_2d
     likelihood_field_2d::likelihood_field_2d(const float &sigma_hit, const float &z_hit, const float &z_rand, const int &map_occupied_threshold)
         : sigma_hit_(sigma_hit), z_hit_(z_hit), z_rand_(z_rand), map_occupied_threshold_(map_occupied_threshold)
     {
-        debug_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("relocalization_transformed_beam_points", 1);
-
         tf_buffer_ = make_unique<tf2_ros::Buffer>();
         tf_listener_ = make_unique<tf2_ros::TransformListener>(*tf_buffer_);
 
@@ -32,11 +30,9 @@ namespace likelihood_field_2d
         const sensor_msgs::LaserScan &scan,
         const nav_msgs::OccupancyGrid &map,
         const vector<float> &obs_dist_table,
-        const int &lidar_sampling_step,
-        const bool &enable_visualization)
+        const int &lidar_sampling_step)
     {
         vector<pair<float, float>> loglik_dist_pairs;
-        vector<tuple<float, float>> beam_points;
 
         float angle = scan.angle_min;
         float total_dist = 0;
@@ -44,67 +40,24 @@ namespace likelihood_field_2d
 
         for (size_t i = 0; i < scan.ranges.size(); i += lidar_sampling_step, angle += scan.angle_increment * lidar_sampling_step)
         {
-            float r = scan.ranges[i];
-
-            if (r < scan.range_min || r > scan.range_max)
+            if (scan.ranges[i] < scan.range_min || scan.ranges[i] > scan.range_max)
             {
                 continue;
             }
 
             geometry_msgs::PointStamped p_lidar, p_map;
             p_lidar.header.frame_id = scan.header.frame_id;
-            p_lidar.point.x = r * cos(angle);
-            p_lidar.point.y = r * sin(angle);
+            p_lidar.point.x = scan.ranges[i] * cos(angle);
+            p_lidar.point.y = scan.ranges[i] * sin(angle);
             tf2::doTransform(p_lidar, p_map, tf_map_to_lidar);
 
-            geometry_msgs::Point32 pt;
-            pt.x = p_map.point.x;
-            pt.y = p_map.point.y;
-            beam_points.emplace_back(pt.x, pt.y);
-
-            int index = position_to_grid_index(pt, map);
-
-            if (index < 0 || index >= static_cast<int>(obs_dist_table.size()))
-            {
-                continue;
-            }
-
-            float dist = obs_dist_table[index];
+            float dist = calc_min_dist_to_obs(map, obs_dist_table,
+                                              create_point(p_map.point.x, p_map.point.y, p_map.point.z));
             float log_p = log(gaussian_prob(dist) + 1e-6f);
             loglik_dist_pairs.emplace_back(log_p, dist);
             total_dist += dist;
 
             valid_beam_count++;
-        }
-
-        if (enable_visualization)
-        {
-            sensor_msgs::PointCloud2 cloud_msg;
-            cloud_msg.header.frame_id = map.header.frame_id;
-            cloud_msg.header.stamp = ros::Time::now();
-            cloud_msg.height = 1;
-            cloud_msg.is_dense = false;
-            cloud_msg.width = beam_points.size();
-
-            sensor_msgs::PointCloud2Modifier modifier(cloud_msg);
-            modifier.setPointCloud2FieldsByString(1, "xyz");
-
-            sensor_msgs::PointCloud2Iterator<float> iter_x(cloud_msg, "x");
-            sensor_msgs::PointCloud2Iterator<float> iter_y(cloud_msg, "y");
-            sensor_msgs::PointCloud2Iterator<float> iter_z(cloud_msg, "z");
-
-            for (const auto &[x, y] : beam_points)
-            {
-                *iter_x = x;
-                *iter_y = y;
-                *iter_z = 0.0f;
-
-                ++iter_x;
-                ++iter_y;
-                ++iter_z;
-            }
-
-            debug_cloud_pub_.publish(cloud_msg);
         }
 
         if (valid_beam_count < 5)
@@ -155,7 +108,6 @@ namespace likelihood_field_2d
         for (int i = 0; i < selected_k; i++)
         {
             float d = loglik_dist_pairs[i].second;
-
             sum_sq += d * d;
         }
 
@@ -170,8 +122,7 @@ namespace likelihood_field_2d
     tuple<float, float, float> likelihood_field_2d::get_likelihood_field_score(const geometry_msgs::TransformStamped &tf_map_to_lidar,
                                                                                const sensor_msgs::LaserScan &scan,
                                                                                const nav_msgs::OccupancyGrid &map,
-                                                                               const int &lidar_sampling_step,
-                                                                               const bool &enable_visualization)
+                                                                               const int &lidar_sampling_step)
     {
         float max_range = scan.range_max;
         float radius = max_range + 2.0f;
@@ -181,8 +132,7 @@ namespace likelihood_field_2d
                                                                 radius, map_occupied_threshold_);
 
         return get_likelihood_field_score(tf_map_to_lidar, scan, map, distance_map,
-                                          lidar_sampling_step,
-                                          enable_visualization);
+                                          lidar_sampling_step);
     }
 
     float likelihood_field_2d::get_confidence(const geometry_msgs::TransformStamped &tf_map_to_lidar,
@@ -190,11 +140,10 @@ namespace likelihood_field_2d
                                               const nav_msgs::OccupancyGrid &map,
                                               const vector<float> &obs_dist_table,
                                               const float &max_tolerance_dist,
-                                              const int &lidar_sampling_step,
-                                              const bool &enable_visualization)
+                                              const int &lidar_sampling_step)
     {
         auto lf_score = get_likelihood_field_score(
-            tf_map_to_lidar, scan, map, obs_dist_table, lidar_sampling_step, enable_visualization);
+            tf_map_to_lidar, scan, map, obs_dist_table, lidar_sampling_step);
         const float likelihood_field_score = get<0>(lf_score);
         const float mean_min_dist = get<1>(lf_score);
         const float consistency_score = get<2>(lf_score);

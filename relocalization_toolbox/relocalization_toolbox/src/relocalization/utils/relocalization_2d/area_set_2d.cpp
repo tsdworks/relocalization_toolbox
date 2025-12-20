@@ -219,15 +219,15 @@ namespace area_set_2d
         return ret;
     }
 
-    vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> area_set_2d::get_area_set(const nav_msgs::OccupancyGrid &map,
-                                                                                                            const sensor_msgs::LaserScan &scan,
-                                                                                                            const bool &lidar_reverted,
-                                                                                                            const int &lidar_sampling_step,
-                                                                                                            const vector<float> &min_dist_to_obs_table,
-                                                                                                            float &min_dist_to_obstacle,
-                                                                                                            const bool &enable_visualization)
+    vector<tuple<geometry_msgs::Point32, vector<float>>> area_set_2d::get_area_set(const nav_msgs::OccupancyGrid &map,
+                                                                                   const sensor_msgs::LaserScan &scan,
+                                                                                   const bool &lidar_reverted,
+                                                                                   const int &lidar_sampling_step,
+                                                                                   const vector<float> &min_dist_to_obs_table,
+                                                                                   float &min_dist_to_obstacle,
+                                                                                   const bool &enable_visualization)
     {
-        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> ret;
+        vector<tuple<geometry_msgs::Point32, vector<float>>> ret;
 
         vector<geometry_msgs::Point32> valid_points;
 
@@ -244,7 +244,7 @@ namespace area_set_2d
 
 #pragma omp parallel
         {
-            vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> local_ret;
+            vector<tuple<geometry_msgs::Point32, vector<float>>> local_ret;
 
             size_t valid_points_size = valid_points.size();
 
@@ -252,11 +252,10 @@ namespace area_set_2d
             for (int i = 0; i < valid_points_size; i++)
             {
                 const auto &point = valid_points[i];
-                nav_msgs::OccupancyGrid submap;
 
                 vector<float> mean_dist_list = get_mean_dist_list(map, scan, lidar_reverted, lidar_sampling_step, point, sensing_radius_);
 
-                local_ret.emplace_back(point, submap, mean_dist_list);
+                local_ret.emplace_back(point, mean_dist_list);
             }
 
 #pragma omp critical

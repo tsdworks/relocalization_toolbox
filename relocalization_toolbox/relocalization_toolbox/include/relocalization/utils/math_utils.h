@@ -222,11 +222,11 @@ vector<float> calc_min_dist_to_obs_table(const nav_msgs::OccupancyGrid &grid,
                                          const float center_x, const float center_y, const float radius,
                                          const int &threshold);
 
-float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> min_dist_to_obs_table, const geometry_msgs::Point32 &position);
+float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> &min_dist_to_obs_table, const geometry_msgs::Point32 &position);
 
-float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> min_dist_to_obs_table, const geometry_msgs::PoseStamped &pose);
+float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> &min_dist_to_obs_table, const geometry_msgs::PoseStamped &pose);
 
-float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> min_dist_to_obs_table, const geometry_msgs::TransformStamped &tf);
+float calc_min_dist_to_obs(const nav_msgs::OccupancyGrid &grid, const vector<float> &min_dist_to_obs_table, const geometry_msgs::TransformStamped &tf);
 
 vector<int> resample_points(const vector<geometry_msgs::Point32> &points, const vector<int> &indices,
                             const float &min_dist);

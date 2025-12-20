@@ -165,11 +165,11 @@ namespace relocalization_2d
 
         area_set_.clear();
 
-        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, float>> area_set_parallel;
+        vector<tuple<geometry_msgs::Point32, float>> area_set_parallel;
 
 #pragma omp parallel
         {
-            vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, float>> local_result;
+            vector<tuple<geometry_msgs::Point32, float>> local_result;
 
 #pragma omp for nowait
             for (int i = 0; i < static_cast<int>(area_set_raw_.size()); i++)
@@ -179,9 +179,10 @@ namespace relocalization_2d
                 float min_diff = numeric_limits<float>::max();
                 float best_value = 0.0f;
 
-                for (const auto &val : get<2>(sub_area_raw))
+                for (const auto &val : get<1>(sub_area_raw))
                 {
                     float diff = abs(val - scan_mean_dist);
+
                     if (diff < min_diff)
                     {
                         min_diff = diff;
@@ -189,12 +190,11 @@ namespace relocalization_2d
                     }
                 }
 
-                local_result.emplace_back(get<0>(sub_area_raw), get<1>(sub_area_raw), best_value);
+                local_result.emplace_back(get<0>(sub_area_raw), best_value);
             }
 
 #pragma omp critical
-            area_set_parallel.insert(area_set_parallel.end(),
-                                     local_result.begin(), local_result.end());
+            area_set_parallel.insert(area_set_parallel.end(), local_result.begin(), local_result.end());
         }
 
         area_set_ = move(area_set_parallel);
@@ -202,7 +202,7 @@ namespace relocalization_2d
         sort(area_set_.begin(), area_set_.end(),
              [scan_mean_dist](const auto &a, const auto &b)
              {
-                 return abs(get<2>(a) - scan_mean_dist) < abs(get<2>(b) - scan_mean_dist);
+                 return abs(get<1>(a) - scan_mean_dist) < abs(get<1>(b) - scan_mean_dist);
              });
 
         size_t area_set_size = area_set_.size();
@@ -222,16 +222,15 @@ namespace relocalization_2d
 
             size_t end_idx = min(start_idx + area_batch_proc_number_, area_set_size);
 
-            vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, float>> sub_area_batch(
-                area_set_.begin() + start_idx, area_set_.begin() + end_idx);
+            vector<tuple<geometry_msgs::Point32, float>> sub_area_batch(area_set_.begin() + start_idx, area_set_.begin() + end_idx);
 
             size_t sub_area_batch_size = sub_area_batch.size();
 
-            vector<tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float>> candidate_sub_areas;
+            vector<tuple<float, geometry_msgs::TransformStamped, float>> candidate_sub_areas;
 
 #pragma omp parallel
             {
-                vector<tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float>> local_sub_areas;
+                vector<tuple<float, geometry_msgs::TransformStamped, float>> local_sub_areas;
 
 #pragma omp for nowait
                 for (int i = 0; i < static_cast<int>(sub_area_batch_size); i++)
@@ -242,8 +241,7 @@ namespace relocalization_2d
                     tf_map_to_lidar.child_frame_id = scan_data_.header.frame_id;
                     tf_map_to_lidar.transform.translation.x = get<0>(sub_area_batch[i]).x;
                     tf_map_to_lidar.transform.translation.y = get<0>(sub_area_batch[i]).y;
-                    tf_map_to_lidar.transform.rotation =
-                        tf::createQuaternionMsgFromRollPitchYaw(lidar_reverted_ ? M_PI : 0, 0, 0);
+                    tf_map_to_lidar.transform.rotation = tf::createQuaternionMsgFromRollPitchYaw(lidar_reverted_ ? M_PI : 0, 0, 0);
 
                     geometry_msgs::TransformStamped tf_map_to_lidar_area_best = tf_map_to_lidar;
                     float confidence_score_area_best = -INFINITY;
@@ -270,11 +268,10 @@ namespace relocalization_2d
                         }
                     }
 
-                    tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float> candidate_sub_area;
+                    tuple<float, geometry_msgs::TransformStamped, float> candidate_sub_area;
                     get<0>(candidate_sub_area) = confidence_score_area_best;
                     get<1>(candidate_sub_area) = tf_map_to_lidar_area_best;
                     get<2>(candidate_sub_area) = get<1>(sub_area_batch[i]);
-                    get<3>(candidate_sub_area) = get<2>(sub_area_batch[i]);
 
                     local_sub_areas.emplace_back(candidate_sub_area);
                 }
@@ -293,7 +290,7 @@ namespace relocalization_2d
                      return get<0>(a) > get<0>(b);
                  });
 
-            vector<tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float>> candidate_transformations;
+            vector<tuple<float, geometry_msgs::TransformStamped, float>> candidate_transformations;
 
             size_t candidate_sub_area_size = candidate_sub_areas.size();
             size_t try_num = min(candidate_sub_area_size, (size_t)area_candidate_number_);
@@ -309,11 +306,10 @@ namespace relocalization_2d
                     scan_data_, map_data_, obs_dist_table_global_,
                     max_tolerance_dist_, lidar_sampling_step_);
 
-                tuple<float, geometry_msgs::TransformStamped, nav_msgs::OccupancyGrid, float> candidate_transformation;
+                tuple<float, geometry_msgs::TransformStamped, float> candidate_transformation;
                 get<0>(candidate_transformation) = confidence_score;
                 get<1>(candidate_transformation) = tf_map_to_lidar_aligned;
                 get<2>(candidate_transformation) = get<2>(candidate_sub_areas[i]);
-                get<3>(candidate_transformation) = get<3>(candidate_sub_areas[i]);
                 geometry_msgs::Point32 candidate_position = create_point(
                     get<1>(candidate_transformation).transform.translation.x,
                     get<1>(candidate_transformation).transform.translation.y,

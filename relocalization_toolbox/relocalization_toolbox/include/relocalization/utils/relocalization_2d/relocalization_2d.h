@@ -126,8 +126,8 @@ namespace relocalization_2d
         sensor_msgs::LaserScan scan_data_;
         nav_msgs::OccupancyGrid map_data_;
         vector<float> obs_dist_table_global_;
-        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> area_set_raw_;
-        vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, float>> area_set_;
+        vector<tuple<geometry_msgs::Point32, vector<float>>> area_set_raw_;
+        vector<tuple<geometry_msgs::Point32, float>> area_set_;
 
         unique_ptr<area_set_2d::area_set_2d> area_set_2d_instance_;
         unique_ptr<likelihood_field_2d::likelihood_field_2d> likelihood_field_2d_instance_;
