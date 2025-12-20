@@ -315,9 +315,14 @@ namespace relocalization_2d
                 get<2>(candidate_transformation) = get<2>(candidate_sub_areas[i]);
                 get<3>(candidate_transformation) = get<3>(candidate_sub_areas[i]);
 
-                float candidate_min_dist_to_obs = calc_min_dist_to_obs(map_data_, obs_dist_table_global_, get<1>(candidate_transformation));
+                geometry_msgs::Point32 candidate_position = create_point(
+                    get<1>(candidate_transformation).transform.translation.x,
+                    get<1>(candidate_transformation).transform.translation.y,
+                    get<1>(candidate_transformation).transform.translation.z);
 
-                if (candidate_min_dist_to_obs >= min_dist_to_obstacle_)
+                if (calc_min_dist_to_obs(map_data_, obs_dist_table_global_, candidate_position) >= min_dist_to_obstacle_ &&
+                    is_point_in_map(candidate_position, map_data_) &&
+                    !is_point_unknow(candidate_position, map_data_, -1, -1))
                 {
 #pragma omp critical
                     candidate_transformations.emplace_back(candidate_transformation);

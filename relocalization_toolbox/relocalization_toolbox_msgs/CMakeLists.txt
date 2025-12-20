@@ -3,6 +3,7 @@ project(relocalization_toolbox_msgs)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options(-O3)
 
 find_package(catkin REQUIRED COMPONENTS
   std_msgs
