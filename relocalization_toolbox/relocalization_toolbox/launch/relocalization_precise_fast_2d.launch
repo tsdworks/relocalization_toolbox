@@ -1,5 +1,0 @@
-<launch>
-    <node name="relocalization_2d_handler" pkg="relocalization_toolbox" type="relocalization_2d_handler" output="screen">
-        <rosparam file="$(find relocalization_toolbox)/config/config_passive_precise_2d.yaml" command="load" />
-    </node>
-</launch>

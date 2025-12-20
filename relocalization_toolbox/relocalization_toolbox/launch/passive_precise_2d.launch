@@ -1,0 +1,9 @@
+<launch>
+    <node name="relocalization_2d_handler" pkg="relocalization_toolbox" type="relocalization_2d_handler" output="screen">
+        <rosparam file="$(find relocalization_toolbox)/config/passive_precise_2d.yaml" command="load" />
+        <!-- <remap from="scan" to="your_LaserScan_topic" /> -->
+        <!-- <remap from="map" to="your_OccupancyGrid_topic" /> -->
+        <!-- <remap from="initialpose" to="your_PoseWithCovarianceStamped_topic" /> -->
+        <!-- <remap from="relocalization_simple_request" to="your_relocalization_service_name" /> -->
+    </node>
+</launch>
