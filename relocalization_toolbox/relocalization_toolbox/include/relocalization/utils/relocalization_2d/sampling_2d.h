@@ -22,9 +22,6 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-// if to use RRT sampling
-#define USE_RRT_SAMPLING 1
-
 // if to use R-Tree in RRT sampling
 #define USE_R_TREE 1
 
@@ -48,7 +45,7 @@ namespace sampling_2d
     {
     public:
         sampling_2d(const float &min_expand_dist, const float &max_expand_dist, const float &min_dist_to_obs,
-               const float &points_min_dist,
+               const float &points_min_dist, const bool &use_traversability_sampling = true,
                const int &free_threshold = 30, const int &occupied_threshold = 55);
         ~sampling_2d() {};
 
@@ -59,6 +56,7 @@ namespace sampling_2d
         float min_expand_dist_, max_expand_dist_;
         float min_dist_to_obs_;
         float points_min_dist_;
+        bool use_traversability_sampling_;
         float start_x_, start_y_;
         float current_map_x_, current_map_y_;
 

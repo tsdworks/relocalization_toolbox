@@ -1095,7 +1095,7 @@ float calc_laser_mean_dist(const sensor_msgs::LaserScan &scan, const float &sens
         {
             const float r = scan.ranges[i];
 
-            if (r <= sensing_radius && r > 0.0f)
+            if (isfinite(r) && r <= sensing_radius && r > 0.0f)
             {
                 sum += r;
                 cnt++;
@@ -1108,7 +1108,7 @@ float calc_laser_mean_dist(const sensor_msgs::LaserScan &scan, const float &sens
         {
             const float r = scan.ranges[i];
 
-            if (r <= sensing_radius && r > 0.0f)
+            if (isfinite(r) && r <= sensing_radius && r > 0.0f)
             {
                 sum += r;
                 cnt++;

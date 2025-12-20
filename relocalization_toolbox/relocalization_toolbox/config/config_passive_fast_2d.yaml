@@ -1,5 +1,5 @@
 relocalization_2d:
-  # 是否发布找到的初始位姿到 /initialpose 话题（用于将重定位结果传输到 AMCL）
+  # 是否发布找到的初始位姿到 /initialpose 话题（用于将重定位结果传输到 AMCL / Cartographer）
   # Whether to publish the estimated initial pose to /initialpose topic
   publish_init_pose_topic: true
 
@@ -35,8 +35,8 @@ relocalization_2d:
   # Whether to enable debug visualization
   enable_visualization: true
 
-  # 是否启用可达性采样进行初始位姿采样
-  # Whether to use traversability-constrained sampling for initial pose candidates
+  # 是否启用RRT可达性采样进行初始位姿采样
+  # Whether to use traversability-constrained RRT sampling for initial pose candidates
   use_traversability_sampling: true
 
   # RRT 单次扩展的最小距离（米）
@@ -49,8 +49,7 @@ relocalization_2d:
 
   # 相邻区域锚点之间的最小距离（米）
   # Minimum distance between anchor points (in meters)
-  # anchor_point_min_dist: 1.0
-  anchor_point_min_dist: 0.6
+  anchor_point_min_dist: 0.8
 
   # 雷达位置采样点与障碍物的最小距离（米）
   # Minimum distance from sampled LiDAR pose to obstacles (in meters)

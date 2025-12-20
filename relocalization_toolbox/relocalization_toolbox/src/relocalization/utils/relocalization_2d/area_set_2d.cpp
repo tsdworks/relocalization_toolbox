@@ -12,10 +12,10 @@
 namespace area_set_2d
 {
     area_set_2d::area_set_2d(const bool &use_traversability_sampling,
-                                 const float &rrt_min_expand_dist, const float &rrt_max_expand_dist, const int &traversability_sampling_duration,
-                                 const int &map_free_threshold, const int &map_occupied_threshold,
-                                 const float &sensing_radius, const float &anchor_point_min_dist,
-                                 const float &angle_search_step)
+                             const float &rrt_min_expand_dist, const float &rrt_max_expand_dist, const int &traversability_sampling_duration,
+                             const int &map_free_threshold, const int &map_occupied_threshold,
+                             const float &sensing_radius, const float &anchor_point_min_dist,
+                             const float &angle_search_step)
         : use_traversability_sampling_(use_traversability_sampling),
           rrt_min_expand_dist_(rrt_min_expand_dist), rrt_max_expand_dist_(rrt_max_expand_dist), traversability_sampling_duration_(traversability_sampling_duration),
           map_free_threshold_(map_free_threshold), map_occupied_threshold_(map_occupied_threshold),
@@ -28,11 +28,11 @@ namespace area_set_2d
     };
 
     nav_msgs::OccupancyGrid area_set_2d::get_area_submap(const nav_msgs::OccupancyGrid &map,
-                                                      const sensor_msgs::LaserScan &scan,
-                                                      const bool &lidar_reverted,
-                                                      const int &lidar_sampling_step,
-                                                      const geometry_msgs::Point32 &anchor_point,
-                                                      const float &max_radius)
+                                                         const sensor_msgs::LaserScan &scan,
+                                                         const bool &lidar_reverted,
+                                                         const int &lidar_sampling_step,
+                                                         const geometry_msgs::Point32 &anchor_point,
+                                                         const float &max_radius)
     {
         const float resolution = map.info.resolution;
         const int width = map.info.width;
@@ -121,11 +121,11 @@ namespace area_set_2d
     }
 
     vector<float> area_set_2d::get_mean_dist_list(const nav_msgs::OccupancyGrid &map,
-                                                    const sensor_msgs::LaserScan &scan,
-                                                    const bool &lidar_reverted,
-                                                    const int &lidar_sampling_step,
-                                                    const geometry_msgs::Point32 &anchor_point,
-                                                    const float &max_radius)
+                                                  const sensor_msgs::LaserScan &scan,
+                                                  const bool &lidar_reverted,
+                                                  const int &lidar_sampling_step,
+                                                  const geometry_msgs::Point32 &anchor_point,
+                                                  const float &max_radius)
     {
         vector<float> ret;
 
@@ -220,71 +220,24 @@ namespace area_set_2d
     }
 
     vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> area_set_2d::get_area_set(const nav_msgs::OccupancyGrid &map,
-                                                                                                                const sensor_msgs::LaserScan &scan,
-                                                                                                                const bool &lidar_reverted,
-                                                                                                                const int &lidar_sampling_step,
-                                                                                                                const vector<float> &min_dist_to_obs_table,
-                                                                                                                float &min_dist_to_obstacle,
-                                                                                                                const bool &enable_visualization)
+                                                                                                            const sensor_msgs::LaserScan &scan,
+                                                                                                            const bool &lidar_reverted,
+                                                                                                            const int &lidar_sampling_step,
+                                                                                                            const vector<float> &min_dist_to_obs_table,
+                                                                                                            float &min_dist_to_obstacle,
+                                                                                                            const bool &enable_visualization)
     {
         vector<tuple<geometry_msgs::Point32, nav_msgs::OccupancyGrid, vector<float>>> ret;
 
         vector<geometry_msgs::Point32> valid_points;
 
-        if (use_traversability_sampling_)
-        {
-            ROS_INFO("Using traversability-constrained sampling.");
+        sampling_2d::sampling_2d sampling(rrt_min_expand_dist_, rrt_max_expand_dist_, min_dist_to_obstacle,
+                                          anchor_point_min_dist_, use_traversability_sampling_,
+                                          map_free_threshold_, map_occupied_threshold_);
 
-            sampling_2d::sampling_2d sampling(rrt_min_expand_dist_, rrt_max_expand_dist_, min_dist_to_obstacle,
-                                              anchor_point_min_dist_, map_free_threshold_, map_occupied_threshold_);
+        sampling.initialize(map, min_dist_to_obs_table);
 
-            sampling.initialize(map, min_dist_to_obs_table);
-
-            valid_points = sampling.get_points(traversability_sampling_duration_);
-        }
-        else
-        {
-            ROS_INFO("Using grid-based sampling.");
-
-            // get map info
-            float resolu = map.info.resolution;
-            float x_min = map.info.origin.position.x;
-            float y_min = map.info.origin.position.y;
-            float x_max = x_min + map.info.width * resolu;
-            float y_max = y_min + map.info.height * resolu;
-
-            // start sample
-            vector<geometry_msgs::Point32> sampled_points;
-
-            for (float x = x_min; x < x_max; x += anchor_point_min_dist_)
-            {
-                for (float y = y_min; y < y_max; y += anchor_point_min_dist_)
-                {
-                    geometry_msgs::Point32 point;
-                    point.x = x;
-                    point.y = y;
-                    point.z = 0.0;
-
-                    sampled_points.push_back(point);
-                }
-            }
-
-            sampled_points = resample_points(sampled_points, anchor_point_min_dist_);
-
-            for (const auto &point : sampled_points)
-            {
-                int index = position_to_grid_index(point, map);
-
-                if (map.data[index] >= 0 && map.data[index] <= map_free_threshold_ &&
-                    min_dist_to_obs_table[index] >= min_dist_to_obstacle)
-                {
-                    valid_points.push_back(point);
-                }
-            }
-
-            // downsample points
-            valid_points = resample_points(valid_points, anchor_point_min_dist_);
-        }
+        valid_points = sampling.get_points(traversability_sampling_duration_);
 
         // get submap data
         auto mean_dist_calc_start_time = ros::WallTime::now();
