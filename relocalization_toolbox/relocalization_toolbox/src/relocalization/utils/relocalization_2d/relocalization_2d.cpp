@@ -213,7 +213,7 @@ namespace relocalization_2d
         float loc_conf_best = 0.0f;
         bool found_valid = false;
 
-        bool early_stop_mode = (max_num_of_candidates <= 1);
+        bool early_termination_mode = (max_num_of_candidates <= 1);
         vector<tuple<float, geometry_msgs::TransformStamped>> all_candidates;
 
         while (start_idx < area_set_size)
@@ -352,7 +352,7 @@ namespace relocalization_2d
                      tf::getYaw(get<1>(candidate_transformations[0]).transform.rotation),
                      get<0>(candidate_transformations[0]));
 
-            if (early_stop_mode)
+            if (early_termination_mode)
             {
                 if (get<0>(candidate_transformations[0]) >= fit_score_threshold_max_)
                 {
@@ -422,7 +422,7 @@ namespace relocalization_2d
                  (sampling_end_time - sampling_start_time).toSec(),
                  (matching_end_time - sampling_end_time).toSec());
 
-        if (!early_stop_mode)
+        if (!early_termination_mode)
         {
             if (all_candidates.empty())
             {
