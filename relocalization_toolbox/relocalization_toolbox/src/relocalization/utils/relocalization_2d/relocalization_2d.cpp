@@ -314,7 +314,6 @@ namespace relocalization_2d
                 get<1>(candidate_transformation) = tf_map_to_lidar_aligned;
                 get<2>(candidate_transformation) = get<2>(candidate_sub_areas[i]);
                 get<3>(candidate_transformation) = get<3>(candidate_sub_areas[i]);
-
                 geometry_msgs::Point32 candidate_position = create_point(
                     get<1>(candidate_transformation).transform.translation.x,
                     get<1>(candidate_transformation).transform.translation.y,
