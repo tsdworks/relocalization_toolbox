@@ -29,7 +29,7 @@ relocalization_2d:
 
   # 激光束下采样步长（1 表示逐光束采样，4 表示每 4 束取 1 束）
   # Laser beam downsampling step (1 = every beam, 4 = every 4th beam)
-  lidar_sampling_step: 4 # >0
+  lidar_sampling_step: 6 # >0
 
   # 地图下采样倍率
   # Map grid downsampling ratio
@@ -64,7 +64,7 @@ relocalization_2d:
   traversability_sampling_duration: 10
 
   # 匹配评分的早停阈值，当某个候选位姿置信度达到该阈值时，算法结束并输出结果
-  # early-terminationping threshold: if any candidate pose reaches this confidence, the algorithm stops and outputs the result
+  # Early-termination threshold: if any candidate pose reaches this confidence, the algorithm stops and outputs the result
   fit_score_threshold_max: 0.98 # [0.0, 1.0]
 
   # 匹配评分的最小阈值，如果没有任何一个候选位姿置信度达到该阈值，则重定位失败
