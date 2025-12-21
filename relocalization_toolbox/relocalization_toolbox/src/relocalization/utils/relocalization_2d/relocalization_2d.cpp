@@ -54,16 +54,18 @@ namespace relocalization_2d
         return;
     };
 
-    void relocalization_2d::set_map(const nav_msgs::OccupancyGrid &map)
+    void relocalization_2d::set_map(const nav_msgs::OccupancyGrid &map,
+                                    const int &map_sampling_step)
     {
         ROS_INFO("Updating relocalization map data...");
 
         map_data_ = map;
+        map_sampling_step_ = map_sampling_step;
 
         obs_dist_table_global_ = calc_min_dist_to_obs_table(
             map_data_, map_occupied_threshold_);
 
-        gicp_2d_instance_->set_map(map_data_);
+        gicp_2d_instance_->set_map(map_data_, map_sampling_step);
 
         ROS_INFO("Relocalization map data loaded successfully.");
     }
@@ -72,6 +74,7 @@ namespace relocalization_2d
         const sensor_msgs::LaserScan &scan,
         const bool &lidar_reverted,
         const int &lidar_sampling_step,
+        const int &map_sampling_step,
         const nav_msgs::OccupancyGrid &map,
         const int &max_num_of_candidates)
     {
@@ -85,15 +88,12 @@ namespace relocalization_2d
         if (map_data_.header.frame_id != map.header.frame_id ||
             map_data_.info.height != map.info.height ||
             map_data_.info.width != map.info.width ||
-            map_data_.data != map.data)
+            map_data_.data != map.data ||
+            map_sampling_step_ != map_sampling_step)
         {
-            set_map(map);
+            set_map(map, map_sampling_step_);
 
             map_changed = true;
-        }
-        else
-        {
-            map_data_ = map;
         }
 
         if (!map_changed)
@@ -132,9 +132,8 @@ namespace relocalization_2d
         }
         else
         {
+            // to update timestamp
             scan_data_ = scan;
-            lidar_reverted_ = lidar_reverted;
-            lidar_sampling_step_ = lidar_sampling_step;
         }
 
         if (!sampling_changed)
@@ -146,7 +145,7 @@ namespace relocalization_2d
             ROS_INFO("Relocalization sampling data updated.");
         }
 
-        gicp_2d_instance_->set_scan(scan_data_);
+        gicp_2d_instance_->set_scan(scan_data_, lidar_sampling_step_);
 
         float scan_mean_dist = calc_laser_mean_dist(scan_data_, sensing_radius_, lidar_sampling_step_);
 

@@ -55,25 +55,27 @@ namespace relocalization_2d
             const float &max_correspondence_distance = 1.0f, const float &transformation_epsilon = 1e-6, const float &euclidean_fitness_epsilon = 1e-5, const int &max_iterations = 50);
         ~relocalization_2d() {};
 
-        void set_map(const nav_msgs::OccupancyGrid &map);
+        void set_map(const nav_msgs::OccupancyGrid &map, const int &map_sampling_step);
 
         tuple<bool, vector<float>, vector<geometry_msgs::TransformStamped>> get_candidates(
             const sensor_msgs::LaserScan &scan,
             const bool &lidar_reverted,
             const int &lidar_sampling_step,
+            const int &map_sampling_step,
             const nav_msgs::OccupancyGrid &map,
             const int &max_num_of_candidates = 1);
         tuple<bool, float, geometry_msgs::TransformStamped> relocalize(
             const sensor_msgs::LaserScan &scan,
             const bool &lidar_reverted,
             const int &lidar_sampling_step,
+            const int &map_sampling_step,
             const nav_msgs::OccupancyGrid &map)
         {
             tuple<bool, float, geometry_msgs::TransformStamped> ret;
             get<0>(ret) = false;
             get<1>(ret) = 0.0f;
 
-            auto cands = get_candidates(scan, lidar_reverted, lidar_sampling_step, map, 1);
+            auto cands = get_candidates(scan, lidar_reverted, lidar_sampling_step, map_sampling_step, map, 1);
 
             if (!get<1>(cands).empty() && !get<2>(cands).empty())
             {
@@ -123,6 +125,7 @@ namespace relocalization_2d
         // related data
         bool lidar_reverted_;
         int lidar_sampling_step_;
+        int map_sampling_step_;
         sensor_msgs::LaserScan scan_data_;
         nav_msgs::OccupancyGrid map_data_;
         vector<float> obs_dist_table_global_;

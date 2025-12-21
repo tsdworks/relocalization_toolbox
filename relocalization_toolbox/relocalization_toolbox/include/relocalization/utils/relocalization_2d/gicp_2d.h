@@ -45,8 +45,10 @@ namespace gicp_2d
                 const int &map_occupied_threshold = 50);
         ~gicp_2d() {};
 
-        void set_scan(const sensor_msgs::LaserScan &scan);
-        void set_map(const nav_msgs::OccupancyGrid &map);
+        void set_scan(const sensor_msgs::LaserScan &scan,
+                      const int &lidar_sampling_step = 1);
+        void set_map(const nav_msgs::OccupancyGrid &map,
+                     const int &map_sampling_step = 1);
 
         geometry_msgs::TransformStamped match(const geometry_msgs::TransformStamped &predict);
 
@@ -56,7 +58,7 @@ namespace gicp_2d
         float euclidean_fitness_epsilon_;
         int max_iterations_;
         float map_occupied_threshold_;
-        
+
         pcl::PointCloud<pcl::PointXYZ>::Ptr scan_cloud_;
         pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
     };

@@ -26,12 +26,14 @@ namespace gicp_2d
         return;
     };
 
-    void gicp_2d::set_scan(const sensor_msgs::LaserScan &scan)
+    void gicp_2d::set_scan(const sensor_msgs::LaserScan &scan,
+                           const int &lidar_sampling_step)
     {
         // scan to cloud
         scan_cloud_->clear();
+        size_t size = scan.ranges.size();
 
-        for (size_t i = 0; i < scan.ranges.size(); i++)
+        for (size_t i = 0; i < size; i += lidar_sampling_step)
         {
             float range = scan.ranges[i];
 
@@ -53,16 +55,17 @@ namespace gicp_2d
         scan_cloud_->is_dense = true;
     }
 
-    void gicp_2d::set_map(const nav_msgs::OccupancyGrid &map)
+    void gicp_2d::set_map(const nav_msgs::OccupancyGrid &map,
+                          const int &map_sampling_step)
     {
         // map to cloud
         map_cloud_->clear();
 
         float resolution = map.info.resolution;
 
-        for (unsigned int y = 0; y < map.info.height; y++)
+        for (unsigned int y = 0; y < map.info.height; y += map_sampling_step)
         {
-            for (unsigned int x = 0; x < map.info.width; x++)
+            for (unsigned int x = 0; x < map.info.width; x += map_sampling_step)
             {
                 int idx = y * map.info.width + x;
 

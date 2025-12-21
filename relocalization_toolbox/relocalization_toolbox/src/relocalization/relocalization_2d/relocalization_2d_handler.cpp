@@ -46,6 +46,7 @@ string lidar_frame;
 bool prefetch_map_from_topic;
 bool lidar_reverted;
 int lidar_sampling_step;
+int map_sampling_step;
 
 bool enable_visualization;
 
@@ -148,7 +149,8 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
         if (map_data_received)
         {
             // Start to relocalize
-            auto reloc_result = relocalization_2d_instance->relocalize(scan_data, lidar_reverted, lidar_sampling_step, map_data);
+            auto reloc_result = relocalization_2d_instance->relocalize(
+                scan_data, lidar_reverted, lidar_sampling_step, map_sampling_step, map_data);
 
             if (get<0>(reloc_result))
             {
@@ -274,7 +276,7 @@ bool get_candidates_request_callback(relocalization_toolbox_msgs::get_candidates
         {
             // Start to get candidates
             auto reloc_candidates = relocalization_2d_instance->get_candidates(
-                scan_data, lidar_reverted, lidar_sampling_step, map_data, req.max_num_of_candidates);
+                scan_data, lidar_reverted, lidar_sampling_step, map_sampling_step, map_data, req.max_num_of_candidates);
 
             if (get<0>(reloc_candidates))
             {
@@ -358,6 +360,7 @@ int main(int argc, char **argv)
     node_handle_param.param<bool>("lidar_reverted", lidar_reverted, true);
 
     node_handle_param.param<int>("lidar_sampling_step", lidar_sampling_step, 4);
+    node_handle_param.param<int>("map_sampling_step", map_sampling_step, 2);
 
     node_handle_param.param<bool>("enable_visualization", enable_visualization, true);
 
@@ -419,8 +422,8 @@ int main(int argc, char **argv)
             map_data = *map_data_ptr;
             map_data.header.frame_id = map_frame;
             map_data_received = true;
-
-            relocalization_2d_instance->set_map(map_data);
+            
+            relocalization_2d_instance->set_map(map_data, map_sampling_step);
         }
         else
         {
