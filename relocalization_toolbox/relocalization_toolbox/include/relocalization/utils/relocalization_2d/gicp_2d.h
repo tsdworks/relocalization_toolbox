@@ -48,7 +48,7 @@ namespace gicp_2d
         void set_scan(const sensor_msgs::LaserScan &scan,
                       const int &lidar_sampling_step = 1);
         void set_map(const nav_msgs::OccupancyGrid &map,
-                     const int &map_sampling_step = 1);
+                     const int &map_sampling_ratio = 1);
 
         geometry_msgs::TransformStamped match(const geometry_msgs::TransformStamped &predict);
 

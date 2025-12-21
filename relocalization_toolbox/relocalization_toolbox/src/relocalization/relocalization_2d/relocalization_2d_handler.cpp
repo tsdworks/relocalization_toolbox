@@ -46,7 +46,7 @@ string lidar_frame;
 bool prefetch_map_from_topic;
 bool lidar_reverted;
 int lidar_sampling_step;
-int map_sampling_step;
+int map_sampling_ratio;
 
 bool enable_visualization;
 
@@ -108,7 +108,7 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
     bool ret = false;
 
     // get current scan
-    auto scan_data_ptr = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan", ros::Duration(2.0));
+    auto scan_data_ptr = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan");
 
     if (scan_data_ptr)
     {
@@ -130,7 +130,7 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
         else if (req.mode == req.MODE_MAP_FROM_TOPIC)
         {
             // load map from topic
-            auto map_data_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map", ros::Duration(5.0));
+            auto map_data_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map");
 
             if (map_data_ptr)
             {
@@ -150,7 +150,7 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
         {
             // Start to relocalize
             auto reloc_result = relocalization_2d_instance->relocalize(
-                scan_data, lidar_reverted, lidar_sampling_step, map_sampling_step, map_data);
+                scan_data, lidar_reverted, lidar_sampling_step, map_sampling_ratio, map_data);
 
             if (get<0>(reloc_result))
             {
@@ -234,7 +234,7 @@ bool get_candidates_request_callback(relocalization_toolbox_msgs::get_candidates
     bool ret = false;
 
     // get current scan
-    auto scan_data_ptr = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan", ros::Duration(2.0));
+    auto scan_data_ptr = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan");
 
     if (scan_data_ptr)
     {
@@ -256,7 +256,7 @@ bool get_candidates_request_callback(relocalization_toolbox_msgs::get_candidates
         else if (req.mode == req.MODE_MAP_FROM_TOPIC)
         {
             // load map from topic
-            auto map_data_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map", ros::Duration(5.0));
+            auto map_data_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map");
 
             if (map_data_ptr)
             {
@@ -276,7 +276,7 @@ bool get_candidates_request_callback(relocalization_toolbox_msgs::get_candidates
         {
             // Start to get candidates
             auto reloc_candidates = relocalization_2d_instance->get_candidates(
-                scan_data, lidar_reverted, lidar_sampling_step, map_sampling_step, map_data, req.max_num_of_candidates);
+                scan_data, lidar_reverted, lidar_sampling_step, map_sampling_ratio, map_data, req.max_num_of_candidates);
 
             if (get<0>(reloc_candidates))
             {
@@ -360,7 +360,7 @@ int main(int argc, char **argv)
     node_handle_param.param<bool>("lidar_reverted", lidar_reverted, true);
 
     node_handle_param.param<int>("lidar_sampling_step", lidar_sampling_step, 4);
-    node_handle_param.param<int>("map_sampling_step", map_sampling_step, 2);
+    node_handle_param.param<int>("map_sampling_ratio", map_sampling_ratio, 2);
 
     node_handle_param.param<bool>("enable_visualization", enable_visualization, true);
 
@@ -413,7 +413,7 @@ int main(int argc, char **argv)
     {
         ROS_INFO("%s: Attempting to fetch map data...", TAG);
 
-        auto map_data_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map", ros::Duration(30.0));
+        auto map_data_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map");
 
         if (map_data_ptr)
         {
@@ -423,7 +423,7 @@ int main(int argc, char **argv)
             map_data.header.frame_id = map_frame;
             map_data_received = true;
             
-            relocalization_2d_instance->set_map(map_data, map_sampling_step);
+            relocalization_2d_instance->set_map(map_data, map_sampling_ratio);
         }
         else
         {
@@ -446,7 +446,7 @@ int main(int argc, char **argv)
             lidar_frame,
             base_frame,
             ros::Time(0),
-            ros::Duration(10.0));
+            ros::Duration(30.0));
     }
     catch (tf2::TransformException &ex)
     {

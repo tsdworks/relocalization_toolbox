@@ -56,16 +56,16 @@ namespace gicp_2d
     }
 
     void gicp_2d::set_map(const nav_msgs::OccupancyGrid &map,
-                          const int &map_sampling_step)
+                          const int &map_sampling_ratio)
     {
         // map to cloud
         map_cloud_->clear();
 
         float resolution = map.info.resolution;
 
-        for (unsigned int y = 0; y < map.info.height; y += map_sampling_step)
+        for (unsigned int y = 0; y < map.info.height; y++)
         {
-            for (unsigned int x = 0; x < map.info.width; x += map_sampling_step)
+            for (unsigned int x = 0; x < map.info.width; x++)
             {
                 int idx = y * map.info.width + x;
 
@@ -87,6 +87,23 @@ namespace gicp_2d
         map_cloud_->width = map_cloud_->points.size();
         map_cloud_->height = 1;
         map_cloud_->is_dense = true;
+
+        // downsampling
+        if (map_sampling_ratio > 1 && !map_cloud_->empty())
+        {
+            const float leaf_size = map_sampling_ratio * resolution;
+
+            pcl::VoxelGrid<pcl::PointXYZ> voxel;
+            voxel.setInputCloud(map_cloud_);
+            voxel.setLeafSize(leaf_size, leaf_size, leaf_size);
+
+            pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(
+                new pcl::PointCloud<pcl::PointXYZ>());
+
+            voxel.filter(*filtered);
+
+            map_cloud_.swap(filtered);
+        }
     }
 
     geometry_msgs::TransformStamped gicp_2d::match(const geometry_msgs::TransformStamped &predict)

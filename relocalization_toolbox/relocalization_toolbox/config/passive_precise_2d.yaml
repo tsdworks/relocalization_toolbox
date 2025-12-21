@@ -31,9 +31,9 @@ relocalization_2d:
   # Laser beam downsampling step (1 = every beam, 4 = every 4th beam)
   lidar_sampling_step: 4 # >0
 
-  # 地图下采样步长（1 表示逐栅格采样，2 表示每 4 个栅格取 1 个）
-  # Map grid downsampling step (1 = every grid, 2 = every 4th grid)
-  map_sampling_step: 2 # >0
+  # 地图下采样倍率
+  # Map grid downsampling ratio
+  map_sampling_ratio: 2 # >0
 
   # 是否发布调试可视化数据
   # Whether to enable debug visualization

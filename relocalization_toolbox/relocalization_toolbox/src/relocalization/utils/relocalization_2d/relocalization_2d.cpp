@@ -55,17 +55,17 @@ namespace relocalization_2d
     };
 
     void relocalization_2d::set_map(const nav_msgs::OccupancyGrid &map,
-                                    const int &map_sampling_step)
+                                    const int &map_sampling_ratio)
     {
         ROS_INFO("Updating relocalization map data...");
 
         map_data_ = map;
-        map_sampling_step_ = map_sampling_step;
+        map_sampling_ratio_ = map_sampling_ratio;
 
         obs_dist_table_global_ = calc_min_dist_to_obs_table(
             map_data_, map_occupied_threshold_);
 
-        gicp_2d_instance_->set_map(map_data_, map_sampling_step);
+        gicp_2d_instance_->set_map(map_data_, map_sampling_ratio);
 
         ROS_INFO("Relocalization map data loaded successfully.");
     }
@@ -74,7 +74,7 @@ namespace relocalization_2d
         const sensor_msgs::LaserScan &scan,
         const bool &lidar_reverted,
         const int &lidar_sampling_step,
-        const int &map_sampling_step,
+        const int &map_sampling_ratio,
         const nav_msgs::OccupancyGrid &map,
         const int &max_num_of_candidates)
     {
@@ -89,9 +89,9 @@ namespace relocalization_2d
             map_data_.info.height != map.info.height ||
             map_data_.info.width != map.info.width ||
             map_data_.data != map.data ||
-            map_sampling_step_ != map_sampling_step)
+            map_sampling_ratio_ != map_sampling_ratio)
         {
-            set_map(map, map_sampling_step_);
+            set_map(map, map_sampling_ratio_);
 
             map_changed = true;
         }
@@ -134,6 +134,8 @@ namespace relocalization_2d
         {
             // to update timestamp
             scan_data_ = scan;
+            lidar_reverted_ = lidar_reverted;
+            lidar_sampling_step_ = lidar_sampling_step;
         }
 
         if (!sampling_changed)
