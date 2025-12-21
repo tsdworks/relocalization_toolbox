@@ -20,8 +20,9 @@ namespace gicp_2d
           euclidean_fitness_epsilon_(euclidean_fitness_epsilon), max_iterations_(max_iterations),
           map_occupied_threshold_(map_occupied_threshold)
     {
-        scan_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
-        map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
+        scan_cloud_.reset(new pcl::PointCloud<pcl::PointXYZ>());
+        map_cloud_.reset(new pcl::PointCloud<pcl::PointXYZ>());
+        map_kdtree_.reset(new pcl::KdTreeFLANN<pcl::PointXYZ>());
 
         return;
     };
@@ -53,6 +54,9 @@ namespace gicp_2d
         scan_cloud_->width = scan_cloud_->points.size();
         scan_cloud_->height = 1;
         scan_cloud_->is_dense = true;
+
+        // scan info
+        scan_max_range_ = scan.range_max;
     }
 
     void gicp_2d::set_map(const nav_msgs::OccupancyGrid &map,
@@ -103,16 +107,72 @@ namespace gicp_2d
             voxel.filter(*filtered);
 
             map_cloud_.swap(filtered);
+
+            map_cloud_->width = map_cloud_->points.size();
+            map_cloud_->height = 1;
+            map_cloud_->is_dense = true;
         }
+
+        // kdtree for local map
+        if (!map_cloud_->empty())
+        {
+            map_kdtree_->setInputCloud(map_cloud_);
+        }
+    }
+
+    void gicp_2d::build_local_map(const float &center_x,
+                                  const float &center_y,
+                                  const float &radius,
+                                  pcl::PointCloud<pcl::PointXYZ>::Ptr &local_map)
+    {
+        pcl::PointXYZ query;
+        query.x = center_x;
+        query.y = center_y;
+        query.z = 0.0f;
+
+        vector<int> indices;
+        vector<float> sqr_dists;
+
+        int found = map_kdtree_->radiusSearch(query, radius, indices, sqr_dists);
+
+        if (found <= 0)
+        {
+            return;
+        }
+
+        auto tree_cloud = map_kdtree_->getInputCloud();
+        local_map->points.reserve(indices.size());
+
+        for (const int &id : indices)
+        {
+            local_map->points.push_back(tree_cloud->points[id]);
+        }
+
+        local_map->width = local_map->points.size();
+        local_map->height = 1;
+        local_map->is_dense = true;
     }
 
     geometry_msgs::TransformStamped gicp_2d::match(const geometry_msgs::TransformStamped &predict)
     {
         geometry_msgs::TransformStamped ret;
 
+        pcl::PointCloud<pcl::PointXYZ>::Ptr local_map_cloud;
+        local_map_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>());
+
+        build_local_map(predict.transform.translation.x,
+                        predict.transform.translation.y,
+                        scan_max_range_ + 4.0f,
+                        local_map_cloud);
+        
+        if (local_map_cloud->empty())
+        {
+            return ret;
+        }
+
         pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
         icp.setInputSource(scan_cloud_);
-        icp.setInputTarget(map_cloud_);
+        icp.setInputTarget(local_map_cloud);
 
         icp.setMaxCorrespondenceDistance(max_correspondence_distance_);
         icp.setTransformationEpsilon(transformation_epsilon_);
@@ -129,7 +189,7 @@ namespace gicp_2d
 
         ret.header.stamp = predict.header.stamp;
         ret.header.frame_id = predict.header.frame_id;
-        ret.child_frame_id = predict.header.frame_id;
+        ret.child_frame_id = predict.child_frame_id;
         ret.transform.translation.x = tf(0, 3);
         ret.transform.translation.y = tf(1, 3);
         ret.transform.translation.z = 0.0;

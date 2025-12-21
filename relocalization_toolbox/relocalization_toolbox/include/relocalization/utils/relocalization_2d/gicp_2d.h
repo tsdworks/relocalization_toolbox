@@ -58,9 +58,16 @@ namespace gicp_2d
         float euclidean_fitness_epsilon_;
         int max_iterations_;
         float map_occupied_threshold_;
+        float scan_max_range_;
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr scan_cloud_;
         pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
+        pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr map_kdtree_;
+
+        void build_local_map(const float &center_x,
+                             const float &center_y,
+                             const float &radius,
+                             pcl::PointCloud<pcl::PointXYZ>::Ptr &local_map);
     };
 }
 
