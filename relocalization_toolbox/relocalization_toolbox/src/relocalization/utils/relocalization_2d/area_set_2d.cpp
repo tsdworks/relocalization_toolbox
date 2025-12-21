@@ -239,7 +239,7 @@ namespace area_set_2d
 
         valid_points = sampling.get_points(traversability_sampling_duration_);
 
-        // get submap data
+        // get sub-area data
         auto mean_dist_calc_start_time = ros::WallTime::now();
 
 #pragma omp parallel

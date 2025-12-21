@@ -95,7 +95,7 @@ namespace gicp_2d
         // downsampling
         if (map_sampling_ratio > 1 && !map_cloud_->empty())
         {
-            const float leaf_size = map_sampling_ratio * resolution;
+            float leaf_size = map_sampling_ratio * resolution;
 
             pcl::VoxelGrid<pcl::PointXYZ> voxel;
             voxel.setInputCloud(map_cloud_);
@@ -109,8 +109,6 @@ namespace gicp_2d
             map_cloud_.swap(filtered);
 
             map_cloud_->width = map_cloud_->points.size();
-            map_cloud_->height = 1;
-            map_cloud_->is_dense = true;
         }
 
         // kdtree for local map
@@ -133,41 +131,34 @@ namespace gicp_2d
         vector<int> indices;
         vector<float> sqr_dists;
 
-        int found = map_kdtree_->radiusSearch(query, radius, indices, sqr_dists);
-
-        if (found <= 0)
+        if (map_kdtree_->radiusSearch(query, radius, indices, sqr_dists) > 0)
         {
-            return;
+            local_map->points.reserve(indices.size());
+
+            for (const int &id : indices)
+            {
+                local_map->points.push_back(map_cloud_->points[id]);
+            }
+
+            local_map->width = local_map->points.size();
+            local_map->height = 1;
+            local_map->is_dense = true;
         }
-
-        auto tree_cloud = map_kdtree_->getInputCloud();
-        local_map->points.reserve(indices.size());
-
-        for (const int &id : indices)
-        {
-            local_map->points.push_back(tree_cloud->points[id]);
-        }
-
-        local_map->width = local_map->points.size();
-        local_map->height = 1;
-        local_map->is_dense = true;
     }
 
     geometry_msgs::TransformStamped gicp_2d::match(const geometry_msgs::TransformStamped &predict)
     {
         geometry_msgs::TransformStamped ret;
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr local_map_cloud;
-        local_map_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>());
-
+        pcl::PointCloud<pcl::PointXYZ>::Ptr local_map_cloud(new pcl::PointCloud<pcl::PointXYZ>());
         build_local_map(predict.transform.translation.x,
                         predict.transform.translation.y,
                         scan_max_range_ + 4.0f,
                         local_map_cloud);
-        
+
         if (local_map_cloud->empty())
         {
-            return ret;
+            return predict;
         }
 
         pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;

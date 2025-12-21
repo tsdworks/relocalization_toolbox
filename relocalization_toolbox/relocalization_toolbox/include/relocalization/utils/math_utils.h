@@ -28,6 +28,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/uniform_sampling.h>
 #include <omp.h>
 
 using namespace std;

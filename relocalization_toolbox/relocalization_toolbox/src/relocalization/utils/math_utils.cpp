@@ -1440,10 +1440,10 @@ vector<int> resample_points(const vector<geometry_msgs::Point32> &points, const 
     }
 
     pcl::PointCloud<pcl::PointXYZL>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZL>());
-    pcl::VoxelGrid<pcl::PointXYZL> voxel_filter;
-    voxel_filter.setInputCloud(cloud);
-    voxel_filter.setLeafSize(min_dist, min_dist, 0.1f);
-    voxel_filter.filter(*filtered_cloud);
+    pcl::UniformSampling<pcl::PointXYZL> downsample_filter;
+    downsample_filter.setInputCloud(cloud);
+    downsample_filter.setRadiusSearch(min_dist);
+    downsample_filter.filter(*filtered_cloud);
 
     vector<int> resampled_point_indices;
 
