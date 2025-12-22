@@ -63,7 +63,7 @@ namespace likelihood_field_2d
         {
             try
             {
-                tf_base_to_lidar_ = tf_buffer_->lookupTransform(
+                tf_base_lidar_ = tf_buffer_->lookupTransform(
                     base_frame,
                     scan.header.frame_id,
                     ros::Time(0),
@@ -76,7 +76,7 @@ namespace likelihood_field_2d
 
             Eigen::Isometry3d T_map_base = Eigen::Isometry3d::Identity();
             tf2::fromMsg(robot_pose.pose.pose, T_map_base);
-            Eigen::Isometry3d T_base_lidar = tf2::transformToEigen(tf_base_to_lidar_);
+            Eigen::Isometry3d T_base_lidar = tf2::transformToEigen(tf_base_lidar_);
             Eigen::Isometry3d T_map_lidar = T_map_base * T_base_lidar;
             geometry_msgs::TransformStamped tf_map_to_lidar;
             tf_map_to_lidar.header.stamp = robot_pose.header.stamp;
@@ -107,7 +107,7 @@ namespace likelihood_field_2d
 
         unique_ptr<tf2_ros::Buffer> tf_buffer_;
         unique_ptr<tf2_ros::TransformListener> tf_listener_;
-        geometry_msgs::TransformStamped tf_base_to_lidar_;
+        geometry_msgs::TransformStamped tf_base_lidar_;
     };
 }
 

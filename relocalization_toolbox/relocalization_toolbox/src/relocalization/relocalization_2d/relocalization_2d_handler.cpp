@@ -83,7 +83,7 @@ int max_iterations;
 // tf components and transforms
 unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
 unique_ptr<tf2_ros::Buffer> tf_buffer;
-geometry_msgs::TransformStamped tf_lidar_to_base;
+geometry_msgs::TransformStamped tf_msg_lidar_base;
 
 // relocalization services
 ros::ServiceServer relocalization_server;
@@ -160,7 +160,7 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
                 // get transformations
                 tf2::Transform tf_map_lidar, tf_lidar_base, tf_map_base;
                 tf2::fromMsg(get<2>(reloc_result).transform, tf_map_lidar);
-                tf2::fromMsg(tf_lidar_to_base.transform, tf_lidar_base);
+                tf2::fromMsg(tf_msg_lidar_base.transform, tf_lidar_base);
                 tf_map_base = tf_map_lidar * tf_lidar_base;
                 geometry_msgs::TransformStamped tf_map_to_base;
                 tf_map_to_base.header.stamp = get<2>(reloc_result).header.stamp;
@@ -289,7 +289,7 @@ bool get_candidates_request_callback(relocalization_toolbox_msgs::get_candidates
                 {
                     tf2::Transform tf_map_lidar, tf_lidar_base, tf_map_base;
                     tf2::fromMsg(tf_msg_map_lidar.transform, tf_map_lidar);
-                    tf2::fromMsg(tf_lidar_to_base.transform, tf_lidar_base);
+                    tf2::fromMsg(tf_msg_lidar_base.transform, tf_lidar_base);
                     tf_map_base = tf_map_lidar * tf_lidar_base;
                     geometry_msgs::TransformStamped candidate_tf_map_to_base;
                     candidate_tf_map_to_base.header.stamp = tf_msg_map_lidar.header.stamp;
@@ -422,7 +422,7 @@ int main(int argc, char **argv)
             map_data = *map_data_ptr;
             map_data.header.frame_id = map_frame;
             map_data_received = true;
-            
+
             relocalization_2d_instance->set_map(map_data, map_sampling_ratio);
         }
         else
@@ -442,7 +442,7 @@ int main(int argc, char **argv)
 
     try
     {
-        tf_lidar_to_base = tf_buffer->lookupTransform(
+        tf_msg_lidar_base = tf_buffer->lookupTransform(
             lidar_frame,
             base_frame,
             ros::Time(0),
