@@ -26,7 +26,7 @@ namespace likelihood_field_2d
     }
 
     tuple<float, float, float> likelihood_field_2d::get_likelihood_field_score(
-        const geometry_msgs::TransformStamped &tf_map_to_lidar,
+        const geometry_msgs::TransformStamped &tf_map_lidar,
         const sensor_msgs::LaserScan &scan,
         const nav_msgs::OccupancyGrid &map,
         const vector<float> &obs_dist_table,
@@ -52,7 +52,7 @@ namespace likelihood_field_2d
                 p_lidar.header.frame_id = scan.header.frame_id;
                 p_lidar.point.x = scan.ranges[i] * c;
                 p_lidar.point.y = scan.ranges[i] * s;
-                tf2::doTransform(p_lidar, p_map, tf_map_to_lidar);
+                tf2::doTransform(p_lidar, p_map, tf_map_lidar);
 
                 float dist = calc_min_dist_to_obs(map, obs_dist_table,
                                                   create_point(p_map.point.x, p_map.point.y, p_map.point.z));
@@ -128,7 +128,7 @@ namespace likelihood_field_2d
         return {avg_log_likelihood, mean_dist, consistency_score};
     }
 
-    tuple<float, float, float> likelihood_field_2d::get_likelihood_field_score(const geometry_msgs::TransformStamped &tf_map_to_lidar,
+    tuple<float, float, float> likelihood_field_2d::get_likelihood_field_score(const geometry_msgs::TransformStamped &tf_map_lidar,
                                                                                const sensor_msgs::LaserScan &scan,
                                                                                const nav_msgs::OccupancyGrid &map,
                                                                                const int &lidar_sampling_step)
@@ -136,15 +136,15 @@ namespace likelihood_field_2d
         float max_range = scan.range_max;
         float radius = max_range + 2.0f;
         vector<float> distance_map = calc_min_dist_to_obs_table(map,
-                                                                tf_map_to_lidar.transform.translation.x,
-                                                                tf_map_to_lidar.transform.translation.y,
+                                                                tf_map_lidar.transform.translation.x,
+                                                                tf_map_lidar.transform.translation.y,
                                                                 radius, map_occupied_threshold_);
 
-        return get_likelihood_field_score(tf_map_to_lidar, scan, map, distance_map,
+        return get_likelihood_field_score(tf_map_lidar, scan, map, distance_map,
                                           lidar_sampling_step);
     }
 
-    float likelihood_field_2d::get_confidence(const geometry_msgs::TransformStamped &tf_map_to_lidar,
+    float likelihood_field_2d::get_confidence(const geometry_msgs::TransformStamped &tf_map_lidar,
                                               const sensor_msgs::LaserScan &scan,
                                               const nav_msgs::OccupancyGrid &map,
                                               const vector<float> &obs_dist_table,
@@ -152,7 +152,7 @@ namespace likelihood_field_2d
                                               const int &lidar_sampling_step)
     {
         auto lf_score = get_likelihood_field_score(
-            tf_map_to_lidar, scan, map, obs_dist_table, lidar_sampling_step);
+            tf_map_lidar, scan, map, obs_dist_table, lidar_sampling_step);
         const float likelihood_field_score = get<0>(lf_score);
         const float mean_min_dist = get<1>(lf_score);
         const float consistency_score = get<2>(lf_score);

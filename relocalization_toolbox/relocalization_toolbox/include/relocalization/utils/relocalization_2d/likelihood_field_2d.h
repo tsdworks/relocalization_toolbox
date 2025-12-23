@@ -38,16 +38,16 @@ namespace likelihood_field_2d
         likelihood_field_2d(const float &sigma_hit = 0.2f, const float &z_hit = 1.0f, const float &z_rand = 0.0f, const int &map_occupied_threshold = 50);
         ~likelihood_field_2d() {};
 
-        tuple<float, float, float> get_likelihood_field_score(const geometry_msgs::TransformStamped &tf_map_to_lidar,
+        tuple<float, float, float> get_likelihood_field_score(const geometry_msgs::TransformStamped &tf_map_lidar,
                                                               const sensor_msgs::LaserScan &scan,
                                                               const nav_msgs::OccupancyGrid &map,
                                                               const vector<float> &obs_dist_table,
                                                               const int &lidar_sampling_step);
-        tuple<float, float, float> get_likelihood_field_score(const geometry_msgs::TransformStamped &tf_map_to_lidar,
+        tuple<float, float, float> get_likelihood_field_score(const geometry_msgs::TransformStamped &tf_map_lidar,
                                                               const sensor_msgs::LaserScan &scan,
                                                               const nav_msgs::OccupancyGrid &map,
                                                               const int &lidar_sampling_step);
-        float get_confidence(const geometry_msgs::TransformStamped &tf_map_to_lidar,
+        float get_confidence(const geometry_msgs::TransformStamped &tf_map_lidar,
                              const sensor_msgs::LaserScan &scan,
                              const nav_msgs::OccupancyGrid &map,
                              const vector<float> &obs_dist_table,
@@ -61,35 +61,40 @@ namespace likelihood_field_2d
                              const int &lidar_sampling_step,
                              const string &base_frame = "base_link")
         {
-            try
+            if (!tf_base_lidar_received_)
             {
-                tf_base_lidar_ = tf_buffer_->lookupTransform(
-                    base_frame,
-                    scan.header.frame_id,
-                    ros::Time(0),
-                    ros::Duration(60.0));
-            }
-            catch (...)
-            {
-                return 0.0f;
+                try
+                {
+                    tf_base_lidar_ = tf_buffer_->lookupTransform(
+                        base_frame,
+                        scan.header.frame_id,
+                        ros::Time(0),
+                        ros::Duration(60.0));
+
+                    tf_base_lidar_received_ = true;
+                }
+                catch (...)
+                {
+                    return 0.0f;
+                }
             }
 
             Eigen::Isometry3d T_map_base = Eigen::Isometry3d::Identity();
             tf2::fromMsg(robot_pose.pose.pose, T_map_base);
             Eigen::Isometry3d T_base_lidar = tf2::transformToEigen(tf_base_lidar_);
             Eigen::Isometry3d T_map_lidar = T_map_base * T_base_lidar;
-            geometry_msgs::TransformStamped tf_map_to_lidar;
-            tf_map_to_lidar.header.stamp = robot_pose.header.stamp;
-            tf_map_to_lidar.header.frame_id = map.header.frame_id;
-            tf_map_to_lidar.child_frame_id = scan.header.frame_id;
-            tf_map_to_lidar.transform.translation.x = T_map_lidar.translation().x();
-            tf_map_to_lidar.transform.translation.y = T_map_lidar.translation().y();
-            tf_map_to_lidar.transform.translation.z = T_map_lidar.translation().z();
+            geometry_msgs::TransformStamped tf_map_lidar;
+            tf_map_lidar.header.stamp = robot_pose.header.stamp;
+            tf_map_lidar.header.frame_id = map.header.frame_id;
+            tf_map_lidar.child_frame_id = scan.header.frame_id;
+            tf_map_lidar.transform.translation.x = T_map_lidar.translation().x();
+            tf_map_lidar.transform.translation.y = T_map_lidar.translation().y();
+            tf_map_lidar.transform.translation.z = T_map_lidar.translation().z();
             Eigen::Quaterniond q(T_map_lidar.rotation());
             q.normalize();
-            tf_map_to_lidar.transform.rotation = tf2::toMsg(q);
+            tf_map_lidar.transform.rotation = tf2::toMsg(q);
 
-            return get_confidence(tf_map_to_lidar,
+            return get_confidence(tf_map_lidar,
                                   scan,
                                   map,
                                   obs_dist_table,
@@ -108,6 +113,7 @@ namespace likelihood_field_2d
         unique_ptr<tf2_ros::Buffer> tf_buffer_;
         unique_ptr<tf2_ros::TransformListener> tf_listener_;
         geometry_msgs::TransformStamped tf_base_lidar_;
+        bool tf_base_lidar_received_ = false;
     };
 }
 
