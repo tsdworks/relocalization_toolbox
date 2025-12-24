@@ -65,50 +65,104 @@ namespace gicp_2d
         // map to cloud
         map_cloud_->clear();
 
-        float resolution = map.info.resolution;
+        const int width = (int)map.info.width;
+        const int height = (int)map.info.height;
+        const float resolution = map.info.resolution;
+        const float ox = map.info.origin.position.x;
+        const float oy = map.info.origin.position.y;
 
-        for (unsigned int y = 0; y < map.info.height; y++)
+        if (width <= 0 || height <= 0)
         {
-            for (unsigned int x = 0; x < map.info.width; x++)
-            {
-                int idx = y * map.info.width + x;
+            map_cloud_->width = 0;
+            map_cloud_->height = 1;
+            map_cloud_->is_dense = true;
 
+            return;
+        }
+
+        vector<int> row_count(height, 0);
+
+#pragma omp parallel for schedule(static)
+        for (int y = 0; y < height; y++)
+        {
+            int c = 0;
+            const int base = y * width;
+            for (int x = 0; x < width; x++)
+            {
+                const int idx = base + x;
                 if (map.data[idx] >= map_occupied_threshold_)
                 {
-                    float wx = map.info.origin.position.x + (x + 0.5f) * resolution;
-                    float wy = map.info.origin.position.y + (y + 0.5f) * resolution;
+                    c++;
+                }
+            }
+            row_count[y] = c;
+        }
 
-                    pcl::PointXYZ point;
-                    point.x = wx;
-                    point.y = wy;
-                    point.z = 0.0;
+        vector<int> row_offset(height + 1, 0);
 
-                    map_cloud_->points.push_back(point);
+        for (int y = 0; y < height; y++)
+        {
+            row_offset[y + 1] = row_offset[y] + row_count[y];
+        }
+
+        const int total_occ = row_offset[height];
+
+        if (total_occ <= 0)
+        {
+            map_cloud_->width = 0;
+            map_cloud_->height = 1;
+            map_cloud_->is_dense = true;
+            return;
+        }
+
+        map_cloud_->points.resize((size_t)total_occ);
+
+#pragma omp parallel for schedule(static)
+        for (int y = 0; y < height; y++)
+        {
+            int write = row_offset[y];
+            const int base = y * width;
+            const float wy = oy + ((float)y + 0.5f) * resolution;
+
+            for (int x = 0; x < width; x++)
+            {
+                const int idx = base + x;
+                if (map.data[idx] >= map_occupied_threshold_)
+                {
+                    const float wx = ox + ((float)x + 0.5f) * resolution;
+
+                    pcl::PointXYZ p;
+                    p.x = wx;
+                    p.y = wy;
+                    p.z = 0.0f;
+
+                    map_cloud_->points[(size_t)write] = p;
+                    write++;
                 }
             }
         }
 
-        map_cloud_->width = map_cloud_->points.size();
+        map_cloud_->width = (uint32_t)map_cloud_->points.size();
         map_cloud_->height = 1;
         map_cloud_->is_dense = true;
 
         // downsampling
         if (map_sampling_ratio > 1 && !map_cloud_->empty())
         {
-            float leaf_size = map_sampling_ratio * resolution;
+            const float leaf_size = (float)map_sampling_ratio * resolution;
 
             pcl::VoxelGrid<pcl::PointXYZ> voxel;
             voxel.setInputCloud(map_cloud_);
             voxel.setLeafSize(leaf_size, leaf_size, leaf_size);
 
-            pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(
-                new pcl::PointCloud<pcl::PointXYZ>());
-
+            pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZ>());
             voxel.filter(*filtered);
 
             map_cloud_.swap(filtered);
 
-            map_cloud_->width = map_cloud_->points.size();
+            map_cloud_->width = (uint32_t)map_cloud_->points.size();
+            map_cloud_->height = 1;
+            map_cloud_->is_dense = true;
         }
 
         // kdtree for local map

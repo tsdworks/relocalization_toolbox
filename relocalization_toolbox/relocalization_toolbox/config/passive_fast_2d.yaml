@@ -122,7 +122,7 @@ relocalization_2d:
 
   # ICP 匹配时允许的最大点对距离（米）
   # Maximum correspondence distance in ICP alignment (in meters)
-  max_correspondence_distance: 1.5
+  max_correspondence_distance: 1.6
 
   # ICP 迭代中位姿变换的最小变化量（收敛判据）
   # Minimum transformation change threshold for ICP convergence

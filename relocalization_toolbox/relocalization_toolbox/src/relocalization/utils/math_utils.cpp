@@ -1227,78 +1227,170 @@ nav_msgs::OccupancyGrid clear_footprint_on_grid(const nav_msgs::OccupancyGrid &g
 
 vector<float> calc_min_dist_to_obs_table(const nav_msgs::OccupancyGrid &grid, const int &threshold)
 {
-    int width = grid.info.width;
-    int height = grid.info.height;
-    float resolution = grid.info.resolution;
+    const int width = (int)grid.info.width;
+    const int height = (int)grid.info.height;
+    const float resolution = grid.info.resolution;
 
-    pcl::PointCloud<pcl::PointXY>::Ptr occupied_points(new pcl::PointCloud<pcl::PointXY>());
-    vector<pcl::PointXY, Eigen::aligned_allocator<pcl::PointXY>> temp_points;
+    const float INF = 1e20f;
 
-#pragma omp parallel
+    vector<float> g(width * height, INF);
+    vector<float> d2(width * height, INF);
+
+    auto dt_1d = [&](const float *f, const int n, float *d,
+                     vector<int> &v, vector<float> &z)
     {
-        vector<pcl::PointXY> local_points;
+        int first = -1;
 
-#pragma omp for nowait collapse(2)
-        for (int y = 0; y < height; y++)
+        for (int i = 0; i < n; i++)
         {
-            for (int x = 0; x < width; x++)
+            if (f[i] < INF * 0.5f)
             {
-                int index = y * width + x;
+                first = i;
 
-                if (grid.data[index] >= threshold)
-                {
-                    pcl::PointXY point;
-                    point.x = x * resolution;
-                    point.y = y * resolution;
-                    local_points.push_back(point);
-                }
+                break;
             }
         }
 
-#pragma omp critical
-        temp_points.insert(temp_points.end(), local_points.begin(), local_points.end());
-    }
-
-    occupied_points->points = move(temp_points);
-
-    if (occupied_points->points.empty())
-    {
-        return vector<float>(width * height, numeric_limits<float>::max());
-    }
-
-    pcl::KdTreeFLANN<pcl::PointXY> kdtree;
-    kdtree.setInputCloud(occupied_points);
-
-    vector<float> min_dist_table(width * height, 0.0f);
-
-#pragma omp parallel for collapse(2) schedule(dynamic)
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
+        if (first < 0)
         {
-            int index = y * width + x;
-
-            if (grid.data[index] >= threshold)
+            for (int q = 0; q < n; q++)
             {
-                min_dist_table[index] = 0.0f;
+                d[q] = INF;
             }
-            else
+
+            return;
+        }
+
+        int k = 0;
+        v[0] = first;
+        z[0] = -INF;
+        z[1] = +INF;
+
+        for (int q = first + 1; q < n; q++)
+        {
+            if (f[q] >= INF * 0.5f)
             {
-                pcl::PointXY query_point;
-                query_point.x = x * resolution;
-                query_point.y = y * resolution;
+                continue;
+            }
 
-                vector<int> point_idx_nkn_search(1);
-                vector<float> point_squared_distance(1);
+            float s = 0.0f;
 
-                if (kdtree.nearestKSearch(query_point, 1, point_idx_nkn_search, point_squared_distance) > 0)
+            while (true)
+            {
+                const int p = v[k];
+
+                s = ((f[q] + (float)(q * q)) - (f[p] + (float)(p * p))) / (2.0f * (float)(q - p));
+
+                if (s <= z[k])
                 {
-                    min_dist_table[index] = sqrt(point_squared_distance[0]);
+                    k--;
+
+                    if (k < 0)
+                    {
+                        k = 0;
+                        break;
+                    }
                 }
                 else
                 {
-                    min_dist_table[index] = numeric_limits<float>::max();
+                    break;
                 }
+            }
+
+            k++;
+            v[k] = q;
+            z[k] = s;
+            z[k + 1] = +INF;
+        }
+
+        k = 0;
+
+        for (int q = 0; q < n; q++)
+        {
+            while (z[k + 1] < (float)q)
+            {
+                k++;
+            }
+
+            const int p = v[k];
+
+            d[q] = (float)((q - p) * (q - p)) + f[p];
+        }
+    };
+
+#pragma omp parallel
+    {
+        vector<float> f(height);
+        vector<float> d(height);
+        vector<int> v(height);
+        vector<float> z(height + 1);
+
+#pragma omp for schedule(static)
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                const int idx = y * width + x;
+                f[y] = (grid.data[idx] >= threshold) ? 0.0f : INF;
+            }
+
+            dt_1d(f.data(), height, d.data(), v, z);
+
+            for (int y = 0; y < height; y++)
+            {
+                const int idx = y * width + x;
+
+                g[idx] = d[y];
+            }
+        }
+    }
+
+#pragma omp parallel
+    {
+        vector<float> f(width);
+        vector<float> d(width);
+        vector<int> v(width);
+        vector<float> z(width + 1);
+
+#pragma omp for schedule(static)
+        for (int y = 0; y < height; y++)
+        {
+            const int row_base = y * width;
+
+            for (int x = 0; x < width; x++)
+            {
+                f[x] = g[row_base + x];
+            }
+
+            dt_1d(f.data(), width, d.data(), v, z);
+
+            for (int x = 0; x < width; x++)
+            {
+                d2[row_base + x] = d[x];
+            }
+        }
+    }
+
+    vector<float> min_dist_table(width * height, numeric_limits<float>::max());
+
+#pragma omp parallel for schedule(static)
+    for (int idx = 0; idx < width * height; idx++)
+    {
+        if (grid.data[idx] >= threshold)
+        {
+            min_dist_table[idx] = 0.0f;
+        }
+        else
+        {
+            const float val = d2[idx];
+
+            if (val >= INF * 0.5f)
+            {
+                min_dist_table[idx] = numeric_limits<float>::max();
+            }
+            else
+            {
+                min_dist_table[idx] = sqrt(val) * resolution;
             }
         }
     }
@@ -1310,93 +1402,242 @@ vector<float> calc_min_dist_to_obs_table(const nav_msgs::OccupancyGrid &grid,
                                          const float center_x, const float center_y, const float radius,
                                          const int &threshold)
 {
-    const int width = grid.info.width;
-    const int height = grid.info.height;
+    const int width = (int)grid.info.width;
+    const int height = (int)grid.info.height;
     const float resolution = grid.info.resolution;
     const float origin_x = grid.info.origin.position.x;
     const float origin_y = grid.info.origin.position.y;
 
-    pcl::PointCloud<pcl::PointXY>::Ptr occupied_points(new pcl::PointCloud<pcl::PointXY>());
-    vector<pcl::PointXY, Eigen::aligned_allocator<pcl::PointXY>> temp_points;
+    const float INF = 1e20f;
+    const float r2 = radius * radius;
 
-#pragma omp parallel
+    auto clampi = [](int v, int lo, int hi)
     {
-        vector<pcl::PointXY> local_points;
-        const pcl::PointXY center{center_x, center_y};
+        return max(lo, min(hi, v));
+    };
 
-#pragma omp for collapse(2) nowait
-        for (int y = 0; y < height; y++)
+    int xmin = (int)floor((center_x - radius - origin_x) / resolution);
+    int xmax = (int)ceil((center_x + radius - origin_x) / resolution);
+    int ymin = (int)floor((center_y - radius - origin_y) / resolution);
+    int ymax = (int)ceil((center_y + radius - origin_y) / resolution);
+
+    xmin = clampi(xmin, 0, width - 1);
+    xmax = clampi(xmax, 0, width - 1);
+    ymin = clampi(ymin, 0, height - 1);
+    ymax = clampi(ymax, 0, height - 1);
+
+    vector<float> min_dist_table(width * height, numeric_limits<float>::max());
+
+    if (xmin > xmax || ymin > ymax)
+    {
+        return min_dist_table;
+    }
+
+    const int roi_w = xmax - xmin + 1;
+    const int roi_h = ymax - ymin + 1;
+
+    vector<float> g_roi(roi_w * roi_h, INF);
+    vector<float> d2_roi(roi_w * roi_h, INF);
+
+    auto dt_1d = [&](const float *f, const int n, float *d,
+                     vector<int> &v, vector<float> &z)
+    {
+        int first = -1;
+
+        for (int i = 0; i < n; i++)
         {
-            for (int x = 0; x < width; x++)
+            if (f[i] < INF * 0.5f)
             {
-                int index = y * width + x;
-
-                if (grid.data[index] >= threshold)
-                {
-                    pcl::PointXY point;
-                    point.x = x * resolution + origin_x;
-                    point.y = y * resolution + origin_y;
-
-                    if (calculate_distance(point, center) <= radius)
-                    {
-                        local_points.push_back(point);
-                    }
-                }
+                first = i;
+                break;
             }
         }
 
-#pragma omp critical
-        temp_points.insert(temp_points.end(), local_points.begin(), local_points.end());
-    }
-
-    if (temp_points.empty())
-    {
-        return vector<float>(width * height, numeric_limits<float>::max());
-    }
-
-    occupied_points->points = move(temp_points);
-
-    pcl::KdTreeFLANN<pcl::PointXY> kdtree;
-    kdtree.setInputCloud(occupied_points);
-
-    vector<float> min_dist_table(width * height, 0.0f);
-
-    const pcl::PointXY center{center_x, center_y};
-
-#pragma omp parallel for collapse(2) schedule(dynamic)
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
+        if (first < 0)
         {
-            int index = y * width + x;
-
-            if (grid.data[index] >= threshold)
+            for (int q = 0; q < n; q++)
             {
-                min_dist_table[index] = 0.0f;
+                d[q] = INF;
+            }
+            return;
+        }
+
+        int k = 0;
+
+        v[0] = first;
+        z[0] = -INF;
+        z[1] = +INF;
+
+        for (int q = first + 1; q < n; q++)
+        {
+            if (f[q] >= INF * 0.5f)
+            {
                 continue;
             }
 
-            pcl::PointXY query_point;
-            query_point.x = x * resolution + origin_x;
-            query_point.y = y * resolution + origin_y;
+            float s = 0.0f;
 
-            if (calculate_distance(query_point, center) > radius)
+            while (true)
             {
-                min_dist_table[index] = numeric_limits<float>::max();
+                const int p = v[k];
+
+                s = ((f[q] + (float)(q * q)) - (f[p] + (float)(p * p))) / (2.0f * (float)(q - p));
+
+                if (s <= z[k])
+                {
+                    k--;
+
+                    if (k < 0)
+                    {
+                        k = 0;
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            k++;
+            v[k] = q;
+            z[k] = s;
+            z[k + 1] = +INF;
+        }
+
+        k = 0;
+        for (int q = 0; q < n; q++)
+        {
+            while (z[k + 1] < (float)q)
+            {
+                k++;
+            }
+            const int p = v[k];
+            d[q] = (float)((q - p) * (q - p)) + f[p];
+        }
+    };
+
+    int found_occ = 0;
+
+#pragma omp parallel
+    {
+        vector<float> f(roi_h);
+        vector<float> d(roi_h);
+        vector<int> v(roi_h);
+        vector<float> z(roi_h + 1);
+
+        int local_found = 0;
+
+#pragma omp for schedule(static)
+        for (int i = 0; i < roi_w; i++)
+        {
+            const int x = xmin + i;
+            const float wx = origin_x + (float)x * resolution;
+
+            for (int j = 0; j < roi_h; j++)
+            {
+                const int y = ymin + j;
+                const float wy = origin_y + (float)y * resolution;
+
+                const float dx = wx - center_x;
+                const float dy = wy - center_y;
+
+                if (dx * dx + dy * dy > r2)
+                {
+                    f[j] = INF;
+                    continue;
+                }
+
+                const int idx = y * width + x;
+
+                if (grid.data[idx] >= threshold)
+                {
+                    f[j] = 0.0f;
+
+                    local_found = 1;
+                }
+                else
+                {
+                    f[j] = INF;
+                }
+            }
+
+            dt_1d(f.data(), roi_h, d.data(), v, z);
+
+            for (int j = 0; j < roi_h; j++)
+            {
+                g_roi[j * roi_w + i] = d[j];
+            }
+        }
+
+#pragma omp atomic
+        found_occ |= local_found;
+    }
+
+    if (!found_occ)
+    {
+        return min_dist_table;
+    }
+
+#pragma omp parallel
+    {
+        vector<float> f(roi_w);
+        vector<float> d(roi_w);
+        vector<int> v(roi_w);
+        vector<float> z(roi_w + 1);
+
+#pragma omp for schedule(static)
+        for (int j = 0; j < roi_h; j++)
+        {
+            for (int i = 0; i < roi_w; i++)
+            {
+                f[i] = g_roi[j * roi_w + i];
+            }
+
+            dt_1d(f.data(), roi_w, d.data(), v, z);
+
+            for (int i = 0; i < roi_w; i++)
+            {
+                d2_roi[j * roi_w + i] = d[i];
+            }
+        }
+    }
+
+#pragma omp parallel for schedule(static)
+    for (int j = 0; j < roi_h; j++)
+    {
+        const int y = ymin + j;
+        const float wy = origin_y + (float)y * resolution;
+
+        for (int i = 0; i < roi_w; i++)
+        {
+            const int x = xmin + i;
+            const float wx = origin_x + (float)x * resolution;
+
+            const float dx = wx - center_x;
+            const float dy = wy - center_y;
+
+            if (dx * dx + dy * dy > r2)
+            {
                 continue;
             }
 
-            vector<int> point_idx(1);
-            vector<float> point_squared_dist(1);
+            const int idx = y * width + x;
 
-            if (kdtree.nearestKSearch(query_point, 1, point_idx, point_squared_dist) > 0)
+            if (grid.data[idx] >= threshold)
             {
-                min_dist_table[index] = sqrt(point_squared_dist[0]);
+                min_dist_table[idx] = 0.0f;
+                continue;
             }
-            else
+
+            const float val = d2_roi[j * roi_w + i];
+            
+            if (val >= INF * 0.5f)
             {
-                min_dist_table[index] = numeric_limits<float>::max();
+                continue;
             }
+
+            min_dist_table[idx] = sqrt(val) * resolution;
         }
     }
 
