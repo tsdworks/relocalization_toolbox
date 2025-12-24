@@ -105,7 +105,7 @@ relocalization_2d:
   # Adaptive beam keep ratios
   keep_ratio_1_min: 0.8 # <= keep_ratio_1_max
   keep_ratio_1_max: 0.9 # <= 1.0
-  keep_ratio_2_min: 0.7 # <= keep_ratio_1_min
+  keep_ratio_2_min: 0.7 # <= keep_ratio_1_min & <= keep_ratio_2_max
   keep_ratio_2_max: 0.85 # <= keep_ratio_1_max
 
   # 栅格值小于该值视为自由区（free）
