@@ -18,6 +18,7 @@ namespace relocalization_2d
         const float &angle_search_step, const int &area_batch_proc_number, const int &area_candidate_number,
         const float &min_dist_to_obstacle,
         const float &sigma_hit, const float &z_hit, const float &z_rand, const float &max_tolerance_dist,
+        const float &keep_ratio_1_min, const float &keep_ratio_1_max, const float &keep_ratio_2_min, const float &keep_ratio_2_max,
         const int &map_free_threshold, const int &map_occupied_threshold,
         const float &sensing_radius, const float anchor_point_min_dist,
         const float &max_correspondence_distance, const float &transformation_epsilon, const float &euclidean_fitness_epsilon, const int &max_iterations)
@@ -27,6 +28,7 @@ namespace relocalization_2d
           angle_search_step_(angle_search_step), area_batch_proc_number_(area_batch_proc_number), area_candidate_number_(area_candidate_number),
           min_dist_to_obstacle_(min_dist_to_obstacle),
           sigma_hit_(sigma_hit), z_hit_(z_hit), z_rand_(z_rand), max_tolerance_dist_(max_tolerance_dist),
+          keep_ratio_1_min_(keep_ratio_1_min), keep_ratio_1_max_(keep_ratio_1_max), keep_ratio_2_min_(keep_ratio_2_min), keep_ratio_2_max_(keep_ratio_2_max),
           map_free_threshold_(map_free_threshold), map_occupied_threshold_(map_occupied_threshold),
           sensing_radius_(sensing_radius), anchor_point_min_dist_(anchor_point_min_dist),
           max_correspondence_distance_(max_correspondence_distance), transformation_epsilon_(transformation_epsilon), euclidean_fitness_epsilon_(euclidean_fitness_epsilon), max_iterations_(max_iterations)
@@ -40,7 +42,9 @@ namespace relocalization_2d
             sensing_radius_, anchor_point_min_dist_, angle_search_step_));
 
         likelihood_field_2d_instance_ = unique_ptr<likelihood_field_2d::likelihood_field_2d>(new likelihood_field_2d::likelihood_field_2d(
-            sigma_hit_, z_hit_, z_rand_, map_occupied_threshold_));
+            sigma_hit_, z_hit_, z_rand_,
+            keep_ratio_1_min_, keep_ratio_1_max_, keep_ratio_2_min_, keep_ratio_2_max_,
+            map_occupied_threshold_));
 
         gicp_2d_instance_ = unique_ptr<gicp_2d::gicp_2d>(new gicp_2d::gicp_2d(
             max_correspondence_distance_,

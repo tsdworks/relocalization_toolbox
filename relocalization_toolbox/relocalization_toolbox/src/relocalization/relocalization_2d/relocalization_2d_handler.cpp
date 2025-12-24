@@ -65,6 +65,10 @@ float sigma_hit;
 float z_hit;
 float z_rand;
 float max_tolerance_dist;
+float keep_ratio_1_min;
+float keep_ratio_1_max;
+float keep_ratio_2_min;
+float keep_ratio_2_max;
 
 // map-related parameters
 int map_free_threshold;
@@ -380,6 +384,10 @@ int main(int argc, char **argv)
     node_handle_param.param<float>("z_hit", z_hit, 1.0f);
     node_handle_param.param<float>("z_rand", z_rand, 0.0f);
     node_handle_param.param<float>("max_tolerance_dist", max_tolerance_dist, 1.0f);
+    node_handle_param.param<float>("keep_ratio_1_min", keep_ratio_1_min, 0.80f);
+    node_handle_param.param<float>("keep_ratio_1_max", keep_ratio_1_max, 0.90f);
+    node_handle_param.param<float>("keep_ratio_2_min", keep_ratio_2_min, 0.70f);
+    node_handle_param.param<float>("keep_ratio_2_max", keep_ratio_2_max, 0.85f);
 
     node_handle_param.param<int>("map_free_threshold", map_free_threshold, 30);
     node_handle_param.param<int>("map_occupied_threshold", map_occupied_threshold, 55);
@@ -405,6 +413,7 @@ int main(int argc, char **argv)
             fit_score_threshold_min, fit_score_threshold_max, angle_search_step,
             area_batch_proc_number, area_candidate_number, min_dist_to_obstacle,
             sigma_hit, z_hit, z_rand, max_tolerance_dist,
+            keep_ratio_1_min, keep_ratio_1_max, keep_ratio_2_min, keep_ratio_2_max,
             map_free_threshold, map_occupied_threshold,
             sensing_radius, anchor_point_min_dist,
             max_correspondence_distance, transformation_epsilon, euclidean_fitness_epsilon, max_iterations));

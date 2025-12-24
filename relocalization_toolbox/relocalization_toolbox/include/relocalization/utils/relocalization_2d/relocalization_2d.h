@@ -47,6 +47,7 @@ namespace relocalization_2d
             const float &min_dist_to_obstacle = 0.4,
             // likelihood field model parameters
             const float &sigma_hit = 0.2f, const float &z_hit = 1.0f, const float &z_rand = 0.0f, const float &max_tolerance_dist = 1.0f,
+            const float &keep_ratio_1_min = 0.8f, const float &keep_ratio_1_max = 0.9f, const float &keep_ratio_2_min = 0.7f, const float &keep_ratio_2_max = 0.85f,
             // map-related parameters
             const int &map_free_threshold = 30, const int &map_occupied_threshold = 50,
             // submap partitioning parameters
@@ -107,6 +108,10 @@ namespace relocalization_2d
         float z_hit_;
         float z_rand_;
         float max_tolerance_dist_;
+        float keep_ratio_1_min_ = 0.8f;
+        float keep_ratio_1_max_ = 0.9f;
+        float keep_ratio_2_min_ = 0.70f;
+        float keep_ratio_2_max_ = 0.85f;
 
         // map-related parameters
         int map_free_threshold_;

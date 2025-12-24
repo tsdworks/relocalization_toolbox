@@ -101,6 +101,13 @@ relocalization_2d:
   # Maximum tolerated mean beam-to-obstacle distance (in meters)
   max_tolerance_dist: 3.0
 
+  # 自适应光束保留系数
+  # Adaptive beam keep ratios
+  keep_ratio_1_min: 0.8 # <= keep_ratio_1_max
+  keep_ratio_1_max: 0.9 # <= 1.0
+  keep_ratio_2_min: 0.7 # <= keep_ratio_1_min
+  keep_ratio_2_max: 0.85 # <= keep_ratio_1_max
+
   # 栅格值小于该值视为自由区（free）
   # Occupancy grid value threshold for free space
   map_free_threshold: 30

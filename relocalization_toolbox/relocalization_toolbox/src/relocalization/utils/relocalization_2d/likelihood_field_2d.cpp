@@ -11,8 +11,12 @@
 
 namespace likelihood_field_2d
 {
-    likelihood_field_2d::likelihood_field_2d(const float &sigma_hit, const float &z_hit, const float &z_rand, const int &map_occupied_threshold)
-        : sigma_hit_(sigma_hit), z_hit_(z_hit), z_rand_(z_rand), map_occupied_threshold_(map_occupied_threshold)
+    likelihood_field_2d::likelihood_field_2d(const float &sigma_hit, const float &z_hit, const float &z_rand,
+                                             const float &keep_ratio_1_min, const float &keep_ratio_1_max, const float &keep_ratio_2_min, const float &keep_ratio_2_max,
+                                             const int &map_occupied_threshold)
+        : sigma_hit_(sigma_hit), z_hit_(z_hit), z_rand_(z_rand),
+          keep_ratio_1_min_(keep_ratio_1_min), keep_ratio_1_max_(keep_ratio_1_max), keep_ratio_2_min_(keep_ratio_2_min), keep_ratio_2_max_(keep_ratio_2_max),
+          map_occupied_threshold_(map_occupied_threshold)
     {
         tf_buffer_ = make_unique<tf2_ros::Buffer>();
         tf_listener_ = make_unique<tf2_ros::TransformListener>(*tf_buffer_);
@@ -84,8 +88,8 @@ namespace likelihood_field_2d
 
         float scan_fov = abs(scan.angle_max - scan.angle_min);
         float alpha = clamp((float)((scan_fov - M_PI) / M_PI), 0.0f, 1.0f);
-        float keep_ratio_1 = (1.0f - alpha) * 0.90f + alpha * 0.80f;
-        float keep_ratio_2 = (1.0f - alpha) * 0.85f + alpha * 0.70f;
+        float keep_ratio_1 = (1.0f - alpha) * keep_ratio_1_max_ + alpha * keep_ratio_1_min_;
+        float keep_ratio_2 = (1.0f - alpha) * keep_ratio_2_max_ + alpha * keep_ratio_2_min_;
 
         int k100 = n;
         int k1 = min(n, max(5, static_cast<int>(keep_ratio_1 * n)));

@@ -35,7 +35,9 @@ namespace likelihood_field_2d
     class likelihood_field_2d
     {
     public:
-        likelihood_field_2d(const float &sigma_hit = 0.2f, const float &z_hit = 1.0f, const float &z_rand = 0.0f, const int &map_occupied_threshold = 50);
+        likelihood_field_2d(const float &sigma_hit = 0.2f, const float &z_hit = 1.0f, const float &z_rand = 0.0f,
+                            const float &keep_ratio_1_min = 0.8f, const float &keep_ratio_1_max = 0.9f, const float &keep_ratio_2_min = 0.7f, const float &keep_ratio_2_max = 0.85f,
+                            const int &map_occupied_threshold = 50);
         ~likelihood_field_2d() {};
 
         tuple<float, float, float> get_likelihood_field_score(const geometry_msgs::TransformStamped &tf_map_lidar,
@@ -107,6 +109,10 @@ namespace likelihood_field_2d
         float z_hit_ = 1.0f;
         float z_rand_ = 0.0f;
         int map_occupied_threshold_ = 50;
+        float keep_ratio_1_min_ = 0.8f;
+        float keep_ratio_1_max_ = 0.9f;
+        float keep_ratio_2_min_ = 0.70f;
+        float keep_ratio_2_max_ = 0.85f;
 
         float gaussian_prob(float dist);
 
