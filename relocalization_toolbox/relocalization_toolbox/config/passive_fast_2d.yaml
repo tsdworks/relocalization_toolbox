@@ -29,7 +29,7 @@ relocalization_2d:
 
   # 激光束下采样步长（1 表示逐光束采样，4 表示每 4 束取 1 束）
   # Laser beam downsampling step (1 = every beam, 4 = every 4th beam)
-  lidar_sampling_step: 6 # >0
+  lidar_sampling_step: 4 # >0
 
   # 地图下采样倍率
   # Map grid downsampling ratio

@@ -66,6 +66,8 @@ namespace gicp_2d
         float euclidean_fitness_epsilon_;
         int max_iterations_;
         float map_occupied_threshold_;
+        float map_sampling_ratio_ = 1;
+        float map_resolution_ = 0.05f;
         float scan_max_range_;
 
         pcl::PointCloud<pcl::PointXYZ>::Ptr scan_cloud_;

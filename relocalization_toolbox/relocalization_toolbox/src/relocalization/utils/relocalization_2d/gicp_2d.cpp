@@ -37,8 +37,12 @@ namespace gicp_2d
         // scan to cloud
         scan_cloud_->clear();
         size_t size = scan.ranges.size();
+        float endpoint_dist_min = INFINITY;
+        size_t beam_counter = 0;
+        bool has_last_point = false;
+        pcl::PointXYZ point_last;
 
-        for (size_t i = 0; i < size; i += lidar_sampling_step)
+        for (size_t i = 0; i < size; i++)
         {
             float range = scan.ranges[i];
 
@@ -51,6 +55,27 @@ namespace gicp_2d
                 point.y = range * sin(angle);
                 point.z = 0.0;
 
+                if (!has_last_point)
+                {
+                    point_last = point;
+                    has_last_point = true;
+                    beam_counter = 1;
+
+                    scan_cloud_->points.push_back(point);
+
+                    continue;
+                }
+
+                beam_counter++;
+
+                if (beam_counter >= lidar_sampling_step)
+                {
+                    endpoint_dist_min = min(endpoint_dist_min,
+                                            calculate_distance(point, point_last));
+                    beam_counter = 1;
+                    point_last = point;
+                }
+
                 scan_cloud_->points.push_back(point);
             }
         }
@@ -58,6 +83,25 @@ namespace gicp_2d
         scan_cloud_->width = scan_cloud_->points.size();
         scan_cloud_->height = 1;
         scan_cloud_->is_dense = true;
+
+        // downsampling
+        endpoint_dist_min = max(endpoint_dist_min, map_resolution_ * map_sampling_ratio_);
+
+        if (!scan_cloud_->empty())
+        {
+            pcl::VoxelGrid<pcl::PointXYZ> voxel;
+            voxel.setInputCloud(scan_cloud_);
+            voxel.setLeafSize(endpoint_dist_min, endpoint_dist_min, endpoint_dist_min);
+
+            pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZ>());
+            voxel.filter(*filtered);
+
+            scan_cloud_.swap(filtered);
+
+            scan_cloud_->width = (uint32_t)scan_cloud_->points.size();
+            scan_cloud_->height = 1;
+            scan_cloud_->is_dense = true;
+        }
 
         // scan info
         scan_max_range_ = scan.range_max;
@@ -186,6 +230,10 @@ namespace gicp_2d
         {
             map_kdtree_->setInputCloud(map_cloud_);
         }
+
+        // map info
+        map_sampling_ratio_ = map_sampling_ratio;
+        map_resolution_ = map.info.resolution;
 
         // visualization
         if (enable_visualization_ && !map_cloud_->empty())
