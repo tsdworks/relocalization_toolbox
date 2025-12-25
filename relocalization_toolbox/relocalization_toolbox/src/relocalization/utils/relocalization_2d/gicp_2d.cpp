@@ -15,14 +15,18 @@ namespace gicp_2d
                      const float &transformation_epsilon,
                      const float &euclidean_fitness_epsilon,
                      const int &max_iterations,
-                     const int &map_occupied_threshold)
+                     const int &map_occupied_threshold,
+                     const bool &enable_visualization)
         : max_correspondence_distance_(max_correspondence_distance), transformation_epsilon_(transformation_epsilon),
           euclidean_fitness_epsilon_(euclidean_fitness_epsilon), max_iterations_(max_iterations),
-          map_occupied_threshold_(map_occupied_threshold)
+          map_occupied_threshold_(map_occupied_threshold), enable_visualization_(enable_visualization)
     {
         scan_cloud_.reset(new pcl::PointCloud<pcl::PointXYZ>());
         map_cloud_.reset(new pcl::PointCloud<pcl::PointXYZ>());
         map_kdtree_.reset(new pcl::KdTreeFLANN<pcl::PointXYZ>());
+
+        scan_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("relocalization_scan_cloud", 1);
+        map_cloud_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2>("relocalization_map_cloud", 1);
 
         return;
     };
@@ -57,6 +61,18 @@ namespace gicp_2d
 
         // scan info
         scan_max_range_ = scan.range_max;
+
+        // visualization
+        if (enable_visualization_ && !scan_cloud_->empty())
+        {
+            sensor_msgs::PointCloud2 msg;
+            pcl::toROSMsg(*scan_cloud_, msg);
+
+            msg.header.frame_id = scan.header.frame_id;
+            msg.header.stamp = ros::Time::now();
+
+            scan_cloud_pub_.publish(msg);
+        }
     }
 
     void gicp_2d::set_map(const nav_msgs::OccupancyGrid &map,
@@ -169,6 +185,18 @@ namespace gicp_2d
         if (!map_cloud_->empty())
         {
             map_kdtree_->setInputCloud(map_cloud_);
+        }
+
+        // visualization
+        if (enable_visualization_ && !map_cloud_->empty())
+        {
+            sensor_msgs::PointCloud2 msg;
+            pcl::toROSMsg(*map_cloud_, msg);
+
+            msg.header.frame_id = map.header.frame_id;
+            msg.header.stamp = ros::Time::now();
+
+            map_cloud_pub_.publish(msg);
         }
     }
 

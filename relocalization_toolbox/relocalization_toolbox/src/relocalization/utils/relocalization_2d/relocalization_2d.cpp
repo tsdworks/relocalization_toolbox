@@ -51,7 +51,8 @@ namespace relocalization_2d
             transformation_epsilon_,
             euclidean_fitness_epsilon_,
             max_iterations_,
-            map_occupied_threshold_));
+            map_occupied_threshold_,
+            enable_visualization_));
 
         candidates_pub_ = node_handle_.advertise<geometry_msgs::PoseArray>("relocalization_candidates", 1);
 

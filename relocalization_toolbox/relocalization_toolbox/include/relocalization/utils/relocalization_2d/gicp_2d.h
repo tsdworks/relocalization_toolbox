@@ -19,6 +19,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <tf/tf.h>
 #include <tf2_ros/transform_listener.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -42,7 +43,8 @@ namespace gicp_2d
                 const float &transformation_epsilon = 1e-6,
                 const float &euclidean_fitness_epsilon = 1e-5,
                 const int &max_iterations = 50,
-                const int &map_occupied_threshold = 50);
+                const int &map_occupied_threshold = 50,
+                const bool &enable_visualization = false);
         ~gicp_2d() {};
 
         void set_scan(const sensor_msgs::LaserScan &scan,
@@ -53,6 +55,12 @@ namespace gicp_2d
         geometry_msgs::TransformStamped match(const geometry_msgs::TransformStamped &predict);
 
     private:
+        bool enable_visualization_;
+
+        ros::NodeHandle node_handle_;
+        ros::Publisher scan_cloud_pub_;
+        ros::Publisher map_cloud_pub_;
+
         float max_correspondence_distance_;
         float transformation_epsilon_;
         float euclidean_fitness_epsilon_;
