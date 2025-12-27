@@ -74,11 +74,11 @@ float keep_ratio_2_max;
 int map_free_threshold;
 int map_occupied_threshold;
 
-// submap partitioning parameters
+// sub-area partitioning parameters
 float sensing_radius;
 float anchor_point_min_dist;
 
-// ICP matching parameters
+// icp matching parameters
 float max_correspondence_distance;
 float transformation_epsilon;
 float euclidean_fitness_epsilon;
