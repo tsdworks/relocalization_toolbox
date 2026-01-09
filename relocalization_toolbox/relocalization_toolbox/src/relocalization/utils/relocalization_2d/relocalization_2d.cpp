@@ -323,7 +323,7 @@ namespace relocalization_2d
                     get<1>(candidate_transformation).transform.translation.y,
                     get<1>(candidate_transformation).transform.translation.z);
 
-                if ((!early_termination_mode || !use_traversability_sampling_ || calc_min_dist_to_obs(map_data_, obs_dist_table_global_, candidate_position) >= min_dist_to_obstacle_) &&
+                if (((early_termination_mode && !use_traversability_sampling_) || calc_min_dist_to_obs(map_data_, obs_dist_table_global_, candidate_position) >= min_dist_to_obstacle_) &&
                     is_point_in_map(candidate_position, map_data_) &&
                     !is_point_unknow(candidate_position, map_data_, -1, -1))
                 {
