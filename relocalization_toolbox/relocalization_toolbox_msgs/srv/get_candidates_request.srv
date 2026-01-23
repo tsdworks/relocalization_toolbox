@@ -1,8 +1,10 @@
-uint8 mode
-uint8 MODE_MAP_FROM_TOPIC = 0
-uint8 MODE_MAP_FROM_FILE = 1
-string path
-string name
+uint8 map_mode
+uint8 scan_mode
+uint8 MODE_FROM_TOPIC = 0
+uint8 MODE_FROM_SRV = 1
+string map_path
+string map_name
+sensor_msgs/LaserScan scan
 int32 max_num_of_candidates
 ---
 string result

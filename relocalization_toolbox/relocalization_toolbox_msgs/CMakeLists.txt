@@ -31,6 +31,7 @@ generate_messages(
   std_msgs
   geometry_msgs
   actionlib_msgs
+  sensor_msgs
 )
 
 catkin_package(

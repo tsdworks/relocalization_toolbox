@@ -103,6 +103,7 @@ unique_ptr<relocalization_2d::relocalization_2d> relocalization_2d_instance;
 // topic data
 sensor_msgs::LaserScan scan_data;
 nav_msgs::OccupancyGrid map_data;
+bool scan_data_received = false;
 bool map_data_received = false;
 
 // callback functions
@@ -112,18 +113,41 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
     bool ret = false;
 
     // get current scan
-    auto scan_data_ptr = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan");
+    scan_data_received = false;
 
-    if (scan_data_ptr)
+    if (req.scan_mode == req.MODE_FROM_SRV)
     {
-        scan_data = *scan_data_ptr;
+        scan_data = req.scan;
         scan_data.header.frame_id = lidar_frame;
 
-        // check request mode
-        if (req.mode == req.MODE_MAP_FROM_FILE)
+        scan_data_received = true;
+    }
+    else if (req.scan_mode == req.MODE_FROM_TOPIC)
+    {
+        auto scan_data_ptr = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan");
+
+        if (scan_data_ptr)
+        {
+            scan_data = *scan_data_ptr;
+            scan_data.header.frame_id = lidar_frame;
+
+            scan_data_received = true;
+        }
+    }
+    else
+    {
+        ROS_ERROR("%s: Request failed, invalid scan input mode.", TAG);
+
+        res.result = CMD_RESPONSE_ERROR;
+    }
+
+    if (scan_data_received)
+    {
+        // check request map mode
+        if (req.map_mode == req.MODE_FROM_SRV)
         {
             // load map from file
-            auto data_loaded = load_map_2d(req.path, req.name, map_frame);
+            auto data_loaded = load_map_2d(req.map_path, req.map_name, map_frame);
             map_data_received = get<0>(data_loaded);
 
             if (map_data_received)
@@ -131,7 +155,7 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
                 map_data = get<1>(data_loaded);
             }
         }
-        else if (req.mode == req.MODE_MAP_FROM_TOPIC)
+        else if (req.map_mode == req.MODE_FROM_TOPIC)
         {
             // load map from topic
             auto map_data_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map");
@@ -140,6 +164,7 @@ bool relocalization_request_callback(relocalization_toolbox_msgs::relocalization
             {
                 map_data = *map_data_ptr;
                 map_data.header.frame_id = map_frame;
+
                 map_data_received = true;
             }
         }
@@ -227,7 +252,8 @@ bool relocalization_simple_request_callback(std_srvs::Empty::Request &req,
                                             std_srvs::Empty::Response &res)
 {
     relocalization_toolbox_msgs::relocalization_request srv;
-    srv.request.mode = srv.request.MODE_MAP_FROM_TOPIC;
+    srv.request.map_mode = srv.request.MODE_FROM_TOPIC;
+    srv.request.scan_mode = srv.request.MODE_FROM_TOPIC;
 
     return relocalization_request_callback(srv.request, srv.response);
 }
@@ -238,18 +264,41 @@ bool get_candidates_request_callback(relocalization_toolbox_msgs::get_candidates
     bool ret = false;
 
     // get current scan
-    auto scan_data_ptr = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan");
+    scan_data_received = false;
 
-    if (scan_data_ptr)
+    if (req.scan_mode == req.MODE_FROM_SRV)
     {
-        scan_data = *scan_data_ptr;
+        scan_data = req.scan;
         scan_data.header.frame_id = lidar_frame;
 
+        scan_data_received = true;
+    }
+    else if (req.scan_mode == req.MODE_FROM_TOPIC)
+    {
+        auto scan_data_ptr = ros::topic::waitForMessage<sensor_msgs::LaserScan>("scan");
+
+        if (scan_data_ptr)
+        {
+            scan_data = *scan_data_ptr;
+            scan_data.header.frame_id = lidar_frame;
+
+            scan_data_received = true;
+        }
+    }
+    else
+    {
+        ROS_ERROR("%s: Request failed, invalid scan input mode.", TAG);
+
+        res.result = CMD_RESPONSE_ERROR;
+    }
+
+    if (scan_data_received)
+    {
         // check request mode
-        if (req.mode == req.MODE_MAP_FROM_FILE)
+        if (req.map_mode == req.MODE_FROM_SRV)
         {
             // load map from file
-            auto data_loaded = load_map_2d(req.path, req.name, map_frame);
+            auto data_loaded = load_map_2d(req.map_path, req.map_name, map_frame);
             map_data_received = get<0>(data_loaded);
 
             if (map_data_received)
@@ -257,7 +306,7 @@ bool get_candidates_request_callback(relocalization_toolbox_msgs::get_candidates
                 map_data = get<1>(data_loaded);
             }
         }
-        else if (req.mode == req.MODE_MAP_FROM_TOPIC)
+        else if (req.map_mode == req.MODE_FROM_TOPIC)
         {
             // load map from topic
             auto map_data_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map");
@@ -266,6 +315,7 @@ bool get_candidates_request_callback(relocalization_toolbox_msgs::get_candidates
             {
                 map_data = *map_data_ptr;
                 map_data.header.frame_id = map_frame;
+                
                 map_data_received = true;
             }
         }
@@ -430,6 +480,7 @@ int main(int argc, char **argv)
 
             map_data = *map_data_ptr;
             map_data.header.frame_id = map_frame;
+
             map_data_received = true;
 
             relocalization_2d_instance->set_map(map_data, map_sampling_ratio);
