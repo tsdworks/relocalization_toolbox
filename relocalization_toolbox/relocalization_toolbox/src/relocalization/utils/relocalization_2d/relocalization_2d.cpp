@@ -19,6 +19,7 @@ namespace relocalization_2d
         const float &min_dist_to_obstacle,
         const float &sigma_hit, const float &z_hit, const float &z_rand, const float &max_tolerance_dist,
         const float &keep_ratio_1_min, const float &keep_ratio_1_max, const float &keep_ratio_2_min, const float &keep_ratio_2_max,
+        const bool &geometric_mean_fusion,
         const int &map_free_threshold, const int &map_occupied_threshold,
         const float &sensing_radius, const float anchor_point_min_dist,
         const float &max_correspondence_distance, const float &transformation_epsilon, const float &euclidean_fitness_epsilon, const int &max_iterations)
@@ -29,6 +30,7 @@ namespace relocalization_2d
           min_dist_to_obstacle_(min_dist_to_obstacle),
           sigma_hit_(sigma_hit), z_hit_(z_hit), z_rand_(z_rand), max_tolerance_dist_(max_tolerance_dist),
           keep_ratio_1_min_(keep_ratio_1_min), keep_ratio_1_max_(keep_ratio_1_max), keep_ratio_2_min_(keep_ratio_2_min), keep_ratio_2_max_(keep_ratio_2_max),
+          geometric_mean_fusion_(geometric_mean_fusion),
           map_free_threshold_(map_free_threshold), map_occupied_threshold_(map_occupied_threshold),
           sensing_radius_(sensing_radius), anchor_point_min_dist_(anchor_point_min_dist),
           max_correspondence_distance_(max_correspondence_distance), transformation_epsilon_(transformation_epsilon), euclidean_fitness_epsilon_(euclidean_fitness_epsilon), max_iterations_(max_iterations)
@@ -267,7 +269,8 @@ namespace relocalization_2d
                         float confidence_score = likelihood_field_2d_instance_->get_confidence(
                             tf_map_to_lidar_search,
                             scan_data_, map_data_, obs_dist_table_global_,
-                            max_tolerance_dist_, lidar_sampling_step_);
+                            max_tolerance_dist_, lidar_sampling_step_,
+                            geometric_mean_fusion_);
 
                         if (confidence_score > confidence_score_area_best)
                         {
@@ -312,7 +315,8 @@ namespace relocalization_2d
                 float confidence_score = likelihood_field_2d_instance_->get_confidence(
                     tf_map_to_lidar_aligned,
                     scan_data_, map_data_, obs_dist_table_global_,
-                    max_tolerance_dist_, lidar_sampling_step_);
+                    max_tolerance_dist_, lidar_sampling_step_,
+                    geometric_mean_fusion_);
 
                 tuple<float, geometry_msgs::TransformStamped, float> candidate_transformation;
                 get<0>(candidate_transformation) = confidence_score;

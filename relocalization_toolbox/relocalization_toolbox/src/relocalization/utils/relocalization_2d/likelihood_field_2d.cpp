@@ -153,7 +153,8 @@ namespace likelihood_field_2d
                                               const nav_msgs::OccupancyGrid &map,
                                               const vector<float> &obs_dist_table,
                                               const float &max_tolerance_dist,
-                                              const int &lidar_sampling_step)
+                                              const int &lidar_sampling_step,
+                                              const bool &geometric_mean_fusion)
     {
         auto lf_score = get_likelihood_field_score(
             tf_map_lidar, scan, map, obs_dist_table, lidar_sampling_step);
@@ -170,7 +171,7 @@ namespace likelihood_field_2d
         float clamped_dist = min(max(mean_min_dist, min_dist), max_dist);
         float d_score = 1.0f - ((clamped_dist - min_dist) / (max_dist - min_dist));
 
-        float confidence = pow(p * d_score * consistency_score, 1.0f / 3.0f);
+        float confidence = geometric_mean_fusion ? (pow(p * d_score * consistency_score, 1.0f / 3.0f)) : ((abs(p) + abs(d_score) + abs(consistency_score)) / 3.0f);
 
         return confidence;
     }

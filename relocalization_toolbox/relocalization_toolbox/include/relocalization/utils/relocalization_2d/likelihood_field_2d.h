@@ -54,14 +54,16 @@ namespace likelihood_field_2d
                              const nav_msgs::OccupancyGrid &map,
                              const vector<float> &obs_dist_table,
                              const float &max_tolerance_dist,
-                             const int &lidar_sampling_step);
+                             const int &lidar_sampling_step,
+                             const bool &geometric_mean_fusion = true);
         float get_confidence(const geometry_msgs::PoseWithCovarianceStamped &robot_pose,
                              const sensor_msgs::LaserScan &scan,
                              const nav_msgs::OccupancyGrid &map,
                              const vector<float> &obs_dist_table,
                              const float &max_tolerance_dist,
                              const int &lidar_sampling_step,
-                             const string &base_frame = "base_link")
+                             const string &base_frame = "base_link",
+                             const bool &geometric_mean_fusion = true)
         {
             if (!tf_base_lidar_received_)
             {
@@ -101,7 +103,8 @@ namespace likelihood_field_2d
                                   map,
                                   obs_dist_table,
                                   max_tolerance_dist,
-                                  lidar_sampling_step);
+                                  lidar_sampling_step,
+                                  geometric_mean_fusion);
         }
 
     private:

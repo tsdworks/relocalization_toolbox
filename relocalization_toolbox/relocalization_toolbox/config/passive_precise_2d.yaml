@@ -108,6 +108,10 @@ relocalization_2d:
   keep_ratio_2_min: 0.7 # <= keep_ratio_1_min & <= keep_ratio_2_max
   keep_ratio_2_max: 0.85 # <= keep_ratio_1_max
 
+  # 扫描-地图匹配测度评分是否使用几何平均，如果为否，则使用算术平均
+  # Using geometric mean for scan-to-map matching metric calculation
+  geometric_mean_fusion: true
+
   # 栅格值小于该值视为自由区（free）
   # Occupancy grid value threshold for free space
   map_free_threshold: 30

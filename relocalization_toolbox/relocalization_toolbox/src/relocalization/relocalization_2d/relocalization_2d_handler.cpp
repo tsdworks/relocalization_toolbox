@@ -69,6 +69,7 @@ float keep_ratio_1_min;
 float keep_ratio_1_max;
 float keep_ratio_2_min;
 float keep_ratio_2_max;
+bool geometric_mean_fusion;
 
 // map-related parameters
 int map_free_threshold;
@@ -438,6 +439,7 @@ int main(int argc, char **argv)
     node_handle_param.param<float>("keep_ratio_1_max", keep_ratio_1_max, 0.90f);
     node_handle_param.param<float>("keep_ratio_2_min", keep_ratio_2_min, 0.70f);
     node_handle_param.param<float>("keep_ratio_2_max", keep_ratio_2_max, 0.85f);
+    node_handle_param.param<bool>("geometric_mean_fusion", geometric_mean_fusion, true);
 
     node_handle_param.param<int>("map_free_threshold", map_free_threshold, 30);
     node_handle_param.param<int>("map_occupied_threshold", map_occupied_threshold, 55);
@@ -464,6 +466,7 @@ int main(int argc, char **argv)
             area_batch_proc_number, area_candidate_number, min_dist_to_obstacle,
             sigma_hit, z_hit, z_rand, max_tolerance_dist,
             keep_ratio_1_min, keep_ratio_1_max, keep_ratio_2_min, keep_ratio_2_max,
+            geometric_mean_fusion,
             map_free_threshold, map_occupied_threshold,
             sensing_radius, anchor_point_min_dist,
             max_correspondence_distance, transformation_epsilon, euclidean_fitness_epsilon, max_iterations));
