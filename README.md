@@ -15,4 +15,4 @@ This paper addresses the Kidnapped Robot Problem (KRP), a core localization chal
 
 If you use this code in your research, please cite the associated publication.
 
-M. Zhang, L. Ma, Y. Wu, K. Shen, D. Huang, and H. Leung, “Tackling the kidnapped robot problem via sparse feasible hypothesis sampling and reliable batched multi-stage inference,” IEEE Transactions on Instrumentation and Measurement, doi: 10.1109/TIM.2026.3694741.
+M. Zhang, L. Ma, Y. Wu, K. Shen, D. Huang, and H. Leung, “Tackling the Kidnapped Robot Problem via Sparse Feasible Hypothesis Sampling and Reliable Batched Multi-Stage Inference,” IEEE Transactions on Instrumentation and Measurement, doi: 10.1109/TIM.2026.3694741.
